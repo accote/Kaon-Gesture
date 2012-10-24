@@ -1940,7 +1940,7 @@ inEnglish={@("I18N.Class."~#arg)}
 uiDone={processPendingControls();!startWith3D?(Image.Loading.layer=-1);}
 
 Scene.3d.dataSource="Data.Model"
-Data.ModelUI.url="model/odel_ui.jar"
+Data.ModelUI.url="model/model_ui.jar"
 Data.Model.stall={Data.ModelUI.state!=_CLOSED}
 Data.Model.scene="Scene.3d"
 Data.Model.url="model/model.jar"
