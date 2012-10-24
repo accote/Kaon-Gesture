@@ -1,0 +1,2339 @@
+theDisplay=(theDisplay==""?"Display.Primary":theDisplay)
+theApplet=(theApplet==""?"Applet.Primary":theApplet)
+
+Image.Class.parent=theDisplay
+Area.Class.image=theDisplay
+
+ipadMode={Meson.isHeadless&(theDisplay->clientType==_IPAD|theDisplay->clientType==_ANDROID)}
+doQR={!Meson.isWindows&!Meson.isMac}
+
+initMode=true
+
+insetWidth={theDisplay->width-insetW-insetE}
+insetHeight={theDisplay->height-insetN-insetS}
+insetTop={insetN}
+insetBottom={theDisplay->height-insetS}
+insetLeft={insetW}
+insetRight={theDisplay->width-insetE}
+insetCenterX={(insetLeft+insetRight)/2}
+insetCenterY={(insetTop+insetBottom)/2}
+
+isLandscape={insetWidth>=insetHeight}
+isPortrait={!isLandscape}
+isWideScreen={#r=insetWidth/insetHeight;#r>1.5|#r<0.67}
+
+compactLayout={insetHeight<1080|isPortrait}
+fontScale={compactLayout?(#s=insetHeight/1080;#s>1?1:#s):1}
+
+screenSaverActive=(screenSaverActive==""?false:screenSaverActive)
+
+Image.Loading.layer=20
+
+// Disable shutdown delay when there is not a touch screen.  People do not click the wrong thing when they use a mouse!
+!Meson.touchScreen?(ShutdownDelay=0)
+
+I18N.extends=""
+I18N.Class.showOnMenu=true
+
+Area.Wait.image=theDisplay
+Area.Wait.boxPick=true
+Area.Wait.cursor=_WAIT
+Area.Wait.enabled={Image.Tools.layer<0}
+
+scriptButtonCounter=0
+buttonLayout=[]
+randomScripts=[]
+
+includeMeasure=(includeMeasure==""?true:includeMeasure)
+floorReflection==""?(floorReflection=[0,1])
+floorTexture==""?(floorTexture=false)
+floorTextureIntesity==""?(floorTextureIntesity=0.2)
+selfShadows==""?(selfShadows=false)
+backgroundGlow==""?(backgroundGlow=[])
+startWith3D==""?(startWith3D=true)
+colorTheme==""?(colorTheme="99a")
+
+CHIDE={Meson.touchScreen&!theDisplay->shift?_HIDE:_DEFAULT}
+HAND={Meson.touchScreen?"":_HAND}
+
+Image.Class.cursor={CHIDE}
+Scene.Class.cursor={CHIDE}
+theDisplay->cursor={CHIDE}
+Area.DefPick.image="Image.Primary"
+Area.DefPick.defaultPick=true
+Area.DefPick.cursor={CHIDE}
+
+ScriptRT.Class.stepCurrent={#ret=($$.rate!=0)&$$.callMethod(^method="stepCurrent";^types=["float"];^args=[Meson.frameStep*$$.rate]);$$.accel?(($$.rate=$$.rate+0.5*Meson.frameStep)>=1?($$.rate=1;$$.accel=false));#ret}
+
+autoRunMode=false
+
+bloopEp=0.1
+bloopEp2=bloopEp*bloopEp
+bloop1_Ep=1-bloopEp
+bloop1_Ep2=1-bloopEp2
+bloop={#b=(bloop1_Ep-#arg);#b=(1-#b*#b)/bloop1_Ep2;#b=#b*#b*#b;#b<0.01?0:#b}
+
+Image.CloseBtn<<
+  .file="img/close_btn.png"
+  .layer={Meson.secureUI|hasMainMenu|noTourExitButton?-1:99}
+  .x={insetRight}
+  .y={insetTop}
+  .anchor=_NE
+>>
+Area.CloseBtn.image="Image.CloseBtn"
+Trigger.CloseBtn_press.test={Area.CloseBtn.press}
+Trigger.CloseBtn_press.exec={Meson.exit(0)}
+
+Trigger.AutoRunInSS.test=false /* Set in scene loaded trigger */
+Trigger.AutoRunInSS.exec={autoRunMode=true}
+
+Timer.StartScreenSaver<<
+  .delay=3*60*60
+  .exec={screenSaverActive=true}
+  .start()
+>>
+Trigger.AnyTouchSS.test={theDisplay->press}
+Trigger.AnyTouchSS.exec={screenSaverActive=false;Timer.StartScreenSaver.start()}
+
+randomViolatorPos=0
+Image.Violator<<
+  .width={theDisplay->width}
+  .height=200
+  .buffer="EFFF"
+  .layer={screenSaverActive?999999:-1}
+  .y={randomViolatorPos*(theDisplay->height-Image.Violator.height)}
+>>
+
+Style.CallToAction<<
+  .color="888"
+  .fontWeight=_BOLD
+  .fontSize=24
+  .textAlign=_CENTER
+>>
+
+ctaAnim=0
+Image.CallToAction<<
+  .parent="Image.Violator"
+  .dataSource={customScreenSaverLogo==""?Image.Tools.dataSource:theDisplay->dataSource}
+  .file={customScreenSaverLogo==""?"img/logoColor.gif@img/logoMask.gif":customScreenSaverLogo}
+  .anchor=_N
+  .flyX={ctaAnim>0.25?0:1000-1000*4*ctaAnim}
+  .x={Image.Violator.width/2+Image.CallToAction.flyX}
+  .y=50
+>>
+Image.CallToActionSub<<
+  .parent="Image.Violator"
+  .text={"%CallToAction{TOUCH THE SCREEN TO START}"}
+  .anchor=_N
+  .x={Image.Violator.width/2-Image.CallToAction.flyX}
+  .y={70+Image.CallToAction.height}
+>>
+Anim.CTAAnim<<
+  .attr=["ctaAnim"]
+  .goal=[10]
+  .enabled={screenSaverActive}
+  .rate=1
+>>
+Trigger.CTAReset<<
+  .test={ctaAnim==Anim.CTAAnim.goal[0]}
+  .exec={ctaAnim=0;randomViolatorPos=random01()}
+>>
+
+Meson.notebookPages=128
+
+Trigger.SuppressHover.test={theDisplay->key!=""}
+Trigger.SuppressHover.exec={theDisplay->mouseX=theDisplay->mouseY=-1}
+
+scriptCursor=-1
+scriptCursorMode={scriptCursor!=-1}
+Trigger.ResetScriptCursor.test={keyPressed=="/"|keyPressed="s"}
+Trigger.ResetScriptCursor.exec={scriptCursor=-1;currentTip==""}
+Trigger.ScriptCursorUp.test={keyPressed=="["&allPlayingScripts==[]&randomScripts!=[]}
+Trigger.ScriptCursorUp.exec={
+  scriptCursor=scriptCursor-1;
+  scriptCursor<0?(scriptCursor=Meson.length(randomScripts)-1);
+  currentTip=randomScripts[scriptCursor];
+  !currentTip->runnable?Trigger.ScriptCursorUp.exec():Timer.StartCursorScript.start();
+}
+Trigger.ScriptCursorDown.test={keyPressed=="]"&allPlayingScripts==[]&randomScripts!=[]}
+Trigger.ScriptCursorDown.exec={
+  scriptCursor=scriptCursor+1;
+  scriptCursor>=Meson.length(randomScripts)?(scriptCursor=0);
+  currentTip=randomScripts[scriptCursor];
+  !currentTip->runnable?Trigger.ScriptCursorDown.exec():Timer.StartCursorScript.start();
+}
+Timer.StartCursorScript<<
+  .delay=2
+  .exec={currentTip!=""?(currentTip->runDemo())}
+>>
+Trigger.PlayScriptCursor.test={keyPressed=="p"&currentTip!=""}
+Trigger.PlayScriptCursor.exec={currentTip->runDemo()}
+
+scriptsPaused=false
+pauseArmed=false
+Trigger.PauseArm.test={keyPressed==" "}
+Trigger.PauseArm.exec={pauseArmed=true}
+Trigger.Pause.test={keyPressed==""&pauseArmed&!scriptsPaused}
+Trigger.Pause.exec={pauseArmed=false;scriptsPaused=true;foreach(^elem="i";^in=allPlayingScripts;^do={(#i)->accel=false;(#i)->rate=0})}
+Trigger.Resume.test={keyPressed==""&pauseArmed&scriptsPaused|(keyPressed!="")&!pauseArmed&scriptsPaused}
+Trigger.Resume.exec={pauseArmed=false;scriptsPaused=false;foreach(^elem="i";^in=allPlayingScripts;^do={(#i)->rate=1})}
+
+Trigger.FastForward_press.test={keyPressed=="f"}
+Trigger.FastForward_press.exec={foreach(^elem="i",^in=allPlayingScripts,^do={(#i)->accel=false;(#i)->rate=5})}
+Trigger.FastForward_release.test={keyPressed!="f"}
+Trigger.FastForward_release.exec={foreach(^elem="i",^in=allPlayingScripts,^do={(#i)->rate==5?((#i)->rate=1)})}
+
+Style.Pause<<
+  .color="BED1F8"
+  .fontFamily=["serif"]
+  .fontWeight=_BOLD
+  .fontSize=48
+  .dropShadow=black
+>>
+Image.PauseImage<<
+  .layer={scriptsPaused&!screenSaverActive?999:-1}
+  .text="%Pause{| |}"
+  .anchor=_C
+  .x={insetCenterX}
+  .y={insetCenterY}
+  .alpha={scriptsPaused?(0.2*(Meson.clock%2)):0}
+>>
+
+
+Image.TheCustomerLogo<<
+  .layer={screenSaverActive==""?-1:0}
+  .anchor=_NE
+  .x={insetLeft}
+  .y={insetTop}
+  .dataSource={theDisplay->dataSource}
+  .file="img/logo.png"
+>>
+
+fullMode={attractMode|startWith3D}
+stashControlPanel=false
+
+Scene.3d<<
+  .x={insetLeft}
+  .y={insetTop}
+  .width={insetWidth}
+  .height={insetHeight}
+  .centerY={(insetHeight-100)/(isPortrait?3:2)}
+  .centerXGoal={(
+    fullMode&!stashControlPanel&!sleepMode&!ipadMode?(
+/*
+      #l=fontScale*400;
+      #l+(insetWidth-#l)/2
+*/
+      insetWidth/2
+    ):fullMode?(
+      insetWidth/2
+    ):(
+      #l=fontScale*(ipadMode?915:815);
+      #l+(insetWidth-#l)/2
+    )
+   )}
+  .layer=-1
+  .enabled=false
+  .floorReflectionColor={screenSaverActive?"":floorReflection==[]?"":"1000"}
+  .floorReflectionFadeIn={floorReflection==[]?0:floorReflection[0]}
+  .floorReflectionFadeOut={floorReflection==[]?0:floorReflection[1]}
+  /* Flags: selfShadow=1, floorShadow=2, floorTexture=4 */
+  .selfShadowFlags={screenSaverActive?0:Scene.3d.floorReflectionColor!=""?(selfShadows?(floorTexture?7:3):1):(selfShadows?1:0)}
+  .shaderFloorAlpha={floorTexture?floorTextureIntensity:0}
+  .glow={screenSaverActive?[]:backgroundGlow}
+  .enabled={fullMode}
+>>
+Shadow.Shadow_3d.alpha=0
+Anim.FlyCenterX<<
+  .attr=["Scene.3d.centerX"]
+  .goal=[{Scene.3d.centerXGoal}]
+  .smooth=0.01
+>>
+
+Trigger.Show3D.test={Scene.3d.loaded&Data.Model.imagePercentLoaded>95}
+Trigger.Show3D.exec={
+  Image.Loading.layer=-1;
+  (startWith3D|sectionLayout==[])?Trigger.Start3D.exec():
+  currentBeautyShot!=""?(Scene.3d.playInstantly(currentBeautyShot);View.3d.snap());
+  customizeModel();
+  Trigger.AutoRunInSS.test={screenSaverActive};
+  Scene.3d.layer=1;
+  initMode=false;
+}
+
+Area.3DModel<<
+  .enabled={!fullMode}
+  .x={ipadMode?965:(fontScale*765)}
+  .width={Scene.3d.width}
+  .height={insetBottom-100}
+  .cursor=HAND
+  .boxPick=true
+>>
+
+Trigger.Start3D.test={Area.3DModel.press}
+Trigger.Start3D.exec={start3DArmed=false;ClickOnReset();currentSection="";fullMode=true;Image.3DHint.alpha=5}
+
+
+Style.Sans<<
+  .fontFamily=["SansSerif"]
+>>
+
+Style.Bullet<<
+  .marginLeft={fontScale*50}
+  .contentPre="%BulletMark{\u2022}\t"
+>>
+Style.Bullet2<<
+  .marginLeft={fontScale*80}
+  .contentPre="%Bullet2Mark{\u2022}\t"
+>>
+Style.Bullet3<<
+  .marginLeft={fontScale*110}
+  .contentPre="%Bullet3Mark{\u2022}\t"
+>>
+Style.BulletMark<<
+  .fontFamily=["SansSerif"]
+  .marginLeft={fontScale*20}
+  .color="4a4949"
+  .fontWeight=_BOLD
+  .fontSmooth=2
+  .lineSpacing={fontScale*25}
+>>
+Style.Bullet2Mark<<
+  .fontFamily=["SansSerif"]
+  .marginLeft={fontScale*50}
+  .color="4a4949"
+  .fontWeight=_BOLD
+  .fontSize={fontScale*12}
+  .fontSmooth=2
+>>
+Style.Bullet3Mark<<
+  .fontFamily=["SansSerif"]
+  .marginLeft={fontScale*80}
+  .color="4a4949"
+  .fontWeight=_BOLD
+  .fontSize={fontScale*11}
+  .fontSmooth=2
+>>
+
+Style.CollateralLink<<
+  .fontWeight=_BOLD
+  .textDecoration=_UNDERLINE
+  .area="CollateralLink"
+>>
+CollateralLink.extends="Area"
+CollateralLink.Class<<
+  .menu=""
+  .item=0
+  .init={$$.menu=@(#menu); $$.item=#item; $$.image->absEnabled=true; }
+  .boxPick=true
+  .cursor=_HAND
+  .new={
+    Trigger.$_press.test={$$.press};
+    Trigger.$_press.exec={$$.menu[$$.item]->exec()};
+  }
+>>
+
+Style.3DHint<<
+  .color="333"
+  .dropShadow=white
+  .fontSize=17
+  .lineSpacing=3
+>>
+Image.3DHint<<
+  .text={"%3DHint{"~l10n("3dHint"~(Meson.touchScreen?"Touch":"Mouse"))~"}"}
+  .anchor=_C
+  .x={Scene.3d.centerX}
+  .y={insetBottom-130}
+  .alpha=0
+  .layer={fullMode&!panLock?999:-1}
+>>
+Anim.3DHintAnim<<
+  .attr=["Image.3DHint.alpha"]
+  .goal=[0]
+  .rate=0.5
+>>
+Trigger.Dismiss3DHint.test={Image.3DHint.alpha>1&(Area.3d.press|allPlayingScripts!=[])}
+Trigger.Dismiss3DHint.exec={Image.3DHint.alpha=1}
+Image.MercuryGoBack<<
+  .x={compactLayout?(insetRight-sectionButtonsWidth-250):39}
+  .y={insetBottom-53}
+  .file="img/home.png"
+  .layer={screenSaverActive|!hasMainMenu|ipadMode?-1:0}
+>>
+Area.MercuryGoBack.image="Image.MercuryGoBack"
+Area.MercuryGoBack.cursor=HAND
+Area.MercuryGoBack.boxPick=true
+Trigger.MercuryGoBack_press.test={Area.MercuryGoBack.press}
+Trigger.MercuryGoBack_press.exec={goBackOnRelease=true}
+Trigger.MercuryGoBack_release.test={goBackOnRelease&!theDisplay->press}
+Trigger.MercuryGoBack_release.exec={backToMainMenu()}
+
+Style.IPadMenuButton<<
+  _true.color={colorTheme}
+  _true.fontSize=11
+  _true.fontWeight=_BOLD
+  _false.color=black
+  _false.fontSize=11
+  _false.fontWeight=_BOLD
+>>
+
+Image.IPadMenu<<
+  .x={39-(hasMainMenu?0:100)}
+  .y=984
+  .file={language=="fr"?"img/ipadMenu_fr.png":"img/ipadMenu.png"}
+  .layer={attractMode|!ipadMode?-1:0.1}
+  .states=["off","on","hide"]
+>>
+IPadMenuButton.extends="Area"
+IPadMenuButton.Class<<
+  .image="Image.IPadMenu"
+  .x=0
+  .width=95
+  .exec=""
+  .active={$$.press}
+  .state={!$$.show?"hide":$$.active?"on":"off"}
+  .boxPick=true
+  .show=true
+  .new={
+    IPadMenuButton.Class.x=IPadMenuButton.Class.x+100;
+    Trigger.$_press.test={$$.press};
+    Trigger.$_press.exec={$$.exec()};
+    Image.$_color.layer={$$.show?Image.IPadMenu.layer-0.1:-1};
+    Image.$_color.buffer={colorTheme};
+    Image.$_color.x={Image.IPadMenu.x+$$.x+18};
+    Image.$_color.y={Image.IPadMenu.y+$$.y+11};
+    Image.$_color.width=74;
+    Image.$_color.height=40;
+    Image.$_label.parent="Image.IPadMenu";
+    Image.$_label.enabled=false;
+    Image.$_label.layer={$$.show?0:-1};
+    Image.$_label.x={$$.x+50};
+    Image.$_label.y={60};
+    Image.$_label.anchor=_C;
+    Image.$_label.states=[true,false];
+    Image.$_label.text={"%IPadMenuButton_#{"~l10n("$")~"}"};
+    Area.$_label.image="Image.$_label";
+    Area.$_label.state={$$.active};
+  }
+>>
+IPadMenuButton.IPadHome<<
+  .exec={backToMainMenu()}
+  .show={hasMainMenu}
+>>
+IPadMenuButton.IPadSections<<
+  .active={!fullMode}
+  .exec={sectionLayout[0]->exec()}
+  .show={hasSections}
+>>
+IPadMenuButton.IPad360<<
+  .active={fullMode}
+  .exec={Trigger.Start3D.exec()}
+  .show={hasSections}
+>>
+IPadMenuButton.IPadNotes<<
+  .active={hasHotSpots&showNotes}
+  .exec={showNotes=!showNotes}
+  .enabled={hasHotSpots}
+  .show={fullMode}
+>>
+IPadMenuButton.IPadReset<<
+  .exec={ClickOnReset()}
+  .show={fullMode}
+>>
+
+
+Style.SectionTitle<<
+  .fontSize={fontScale*35}
+  .fontWeight=_BOLD
+  .color="4a4949"
+  .lineSpacing={fontScale*10}
+>>
+Style.SectionSubTitle<<
+  .fontSize={fontScale*21}
+  .fontWeight=_BOLD
+  .color={colorTheme}
+  .lineSpacing={fontScale*10}
+>>
+Style.SectionContent<<
+  .margin={fontScale*10}
+  .fontSize={fontScale*20}
+  .color="4a4949"
+  .lineSpacing={fontScale*10}
+>>
+
+Image.SectionBg<<
+  .layer={ipadMode&!fullMode?0:-1}
+  .x=41
+  .y=189
+  .file="img/sectionBg.png"
+>>
+
+sectionButtonCounter=0
+sectionLayout=[]
+sectionButtonsWidth={sectionLayout==[]?0:sectionLayout[Meson.length(sectionLayout)-1]->right}
+hasSections={sectionLayout!=[]}
+
+currentGraphic=""
+currentGraphicOffset={currentGraphic!=""?currentGraphic->offset:0}
+Style.Bold.fontSmooth=2
+Image.SectionContent<<
+  .x={ipadMode?75:115*fontScale}
+  .y={ipadMode?290:(insetBottom+currentGraphicOffset)/2}
+  .wrapWidth={ipadMode?800:600*fontScale}
+  .layer={fullMode?-1:10}
+  .anchor={ipadMode?_NW:_W}
+  .label=""
+  .tabStops={[50*fontScale,80*fontScale,110*fontScale]}
+  .title={currentSectionButton->place==0?"%SectionTitle{"~currentProductTitle~"\n}%SectionSubTitle{"~currentProductSubTitle~"}\n\n":""}
+  .text={"%SectionContent{"~$$$.title~Image.SectionContent.label~"}"}
+  .noOrphan=true
+>>
+Anim.SCAnim<<
+  .attr=["Image.SectionContent.alpha"]
+  .goal=[1]
+  .rate=1
+>>
+
+SectionGraphic.extends="Image"
+SectionGraphic.Class<<
+  .parent="Image.SectionContent"
+  .section=""
+  .layer={currentSection==$$.section?1:-1}
+  .x={Image.SectionContent.wrapWidth/2}
+  .y={$$.anchor==_N?Image.SectionContent.height+5:-5}
+  .offset={$$.layer==-1?0:($$.anchor==_N?0-$$.height:$$.height)}
+  .new={
+    Trigger.Show$.test={$$.layer!=-1};
+    Trigger.Show$.exec={currentGraphic="$$"};
+  }
+>>
+SectionScript.extends=""
+SectionScript.Class<<
+  .section=""
+  .script=""
+  .new={
+    Trigger.RunScript$.test={currentSection==$$.section};
+    Trigger.RunScript$.exec={Scene.3d.playStartSlow($$.script)};
+  }
+>>
+
+Style.PageNumber<<
+  _plain.fontFamily=["SansSerif"]
+  _plain.fontSize={16*fontScale}
+  _plain.color="4a4949"
+  _hover.fontFamily=["SansSerif"]
+  _hover.fontSize={16*fontScale}
+  _hover.color={colorTheme}
+>>
+Style.PageLabel<<
+  .fontSize={(language=="fr"?13:16)*fontScale}
+  .color="4a4949"
+>>
+
+currentSectionButton={currentSection==""?"":("SectionButton."~currentSection)}
+Image.SectionNext<<
+  .x={Image.SectionContent.x+Image.SectionContent.wrapWidth-73*fontScale}
+  .y={ipadMode?900:insetBottom-130}
+  .anchor=_SW
+  .states=["plain","hover"]
+  .file="img/arrow_right.png"
+  .layer={initMode|fullMode?-1:4}
+  .scaleX={fontScale}
+  .scaleY={fontScale}
+>>
+Image.SectionPrev<<
+  .x={Image.SectionContent.x+100*fontScale}
+  .y={Image.SectionNext.y}
+  .anchor=_SE
+  .states=["plain","hover"]
+  .file="img/arrow_left.png"
+  .layer={initMode|fullMode?-1:4}
+  .scaleX={fontScale}
+  .scaleY={fontScale}
+>>
+Image.PageLabel<<
+  .text={"%PageLabel{"~currentSectionButton->label~"   "~l10n("Page")~" }"}
+  .x={(Image.SectionPrev.x+Image.SectionNext.x-20*currentSectionButton->numberOfSectionPages)/2}
+  .y={Image.SectionNext.y-15}
+  .anchor=_S
+  .layer={initMode|fullMode?-1:0}
+  .wrapWidth={1000*fontScale}
+>>
+Area.SectionNext<<
+  .image="Image.SectionNext"
+  .state={Area.SectionNext.hover|Meson.touchScreen?"hover":"plain"}
+  .boxPick=true
+  .cursor=HAND
+>>
+Area.SectionPrev<<
+  .image="Image.SectionPrev"
+  .state={Area.SectionPrev.hover|Meson.touchScreen?"hover":"plain"}
+  .boxPick=true
+  .cursor=HAND
+>>
+Trigger.SectionNextPage.test={Area.SectionNext.press}
+Trigger.SectionNextPage.exec={currentSectionButton->nextSection()}
+Trigger.SectionPrevPage.test={Area.SectionPrev.press}
+Trigger.SectionPrevPage.exec={currentSectionButton->prevSection()}
+
+Style.SectionButton<<
+  _plain.color=black
+  _hover.color={ipadMode?black:white}
+  _plain.fontWeight=_BOLD
+  _hover.fontWeight=_BOLD
+  _plain.fontSize={ipadMode?16:fontScale*18}
+  _hover.fontSize={ipadMode?16:fontScale*18}
+  _plain.margin=4
+  _hover.margin=4
+  _plain.lineSpacing=4
+  _hover.lineSpacing=4
+>>
+
+Image.SectionButtons<<
+  .x={ipadMode?79:(Image.MercuryGoBack.x+75)}
+  .y={ipadMode?207:(insetBottom-60)}
+>>
+
+currentSection=""
+SectionButton.extends="Image"
+SectionButton.Class<<
+  .parent="Image.SectionButtons"
+  .x={$$.place==0?0:sectionLayout[$$.place-1]->right};
+  .label=""
+  .sectionText=""
+  .nextSection={$$.place==Meson.length(sectionLayout)-1?sectionLayout[0]->exec():sectionLayout[$$.place+1]->exec()}
+  .prevSection={$$.place==0?sectionLayout[Meson.length(sectionLayout)-1]->exec():sectionLayout[$$.place-1]->exec()}
+  .hasNext={$$.place!=Meson.length(sectionLayout)-1}
+  .hasPrev={$$.place!=0}
+  .next={$$.hasNext?sectionLayout[$$.place+1]:""}
+  .numberOfSectionPages={$$.hasNext&$$.next->isPage?$$.next->numberOfSectionPages:$$.pageNumber}
+  .exec={currentSection="$";fullMode={attractMode==true}}
+  .layer={$$.label==""|$$.isPage|(ipadMode&fullMode)?-1:1}
+  .right={$$.isPage?$$.x:$$.x+(ipadMode?225:($$.width+25*fontScale))}
+  .anchor=_NW
+  .states=["plain","hover"]
+  .text={"%SectionButton_#{"~$$.label~"}"}
+  .wrapWidth={iPadMode?160:fontScale*150}
+  .isPage={$$.place>0&sectionLayout[$$.place-1]->label==$$.label}
+  .place=0
+  .position={$$.place==0?0:(#p=sectionLayout[$$.place-1];(#p)->label==$$.label?(#p)->position:1+(#p)->position)}
+  .pageNumber={!$$.isPage?1:1+sectionLayout[$$.place-1]->pageNumber}
+  .showActive={currentSection!=""&currentSectionButton->label==$$.label}
+  .new={
+    $$.place=sectionButtonCounter;
+    sectionButtonCounter=sectionButtonCounter+1;
+    sectionLayout[$$.place]="$$";
+    Area.$.image="$$";
+    Area.$.state={$$.showActive?"hover":"plain"};
+    Area.$.boxPick=true;
+    Area.$.cursor=HAND;
+    Image.$_tab.parent="Image.SectionButtons";
+    Image.$_tab.x={$$.x-28};
+    Image.$_tab.y={$$.y-8};
+    Image.$_tab.dataSource=programDataSource;
+    Image.$_tab.file="img/sec_tab.png";
+    Image.$_tab.layer={$$.showActive&ipadMode&!$$.isPage?0:-1};
+    Image.$_bg.parent="Image.SectionButtons";
+    Image.$_bg.x={$$.x};
+    Image.$_bg.y={$$.y};
+    Image.$_bg.width={$$.width};
+    Image.$_bg.height={insetBottom-$$.absY};
+    Image.$_bg.buffer={colorTheme};
+    Image.$_bg.layer={$$.showActive&!ipadMode?0:-1};
+    Image.$_sep.parent="Image.SectionButtons";
+    Image.$_sep.x={$$.x+$$.width+12};
+    Image.$_sep.y={$$.y};
+    Image.$_sep.width=1;
+    Image.$_sep.height={insetBottom-$$.absY-20};
+    Image.$_sep.buffer="ccc";
+    Image.$_sep.layer={$$.isPage|ipadMode?-1:1};
+    $$.place==0&hasMainMenu?(
+      Image.$_sep2.parent="Image.SectionButtons";
+      Image.$_sep2.x={$$.x-12};
+      Image.$_sep2.y={$$.y};
+      Image.$_sep2.width=1;
+      Image.$_sep2.height={insetBottom-$$.absY-20};
+      Image.$_sep2.buffer="ccc";
+      Image.$_sep2.layer={ipadMode?-1:1};
+    );
+    Image.$_page.text={"%PageNumber_#{"~(currentSection=="$"?("["~Meson.round($$.pageNumber)~"]"):Meson.round($$.pageNumber))~"}"};
+    Image.$_page.states=["plain","hover"];
+    Image.$_page.x={Image.PageLabel.x+Image.PageLabel.width/2+(10+($$.pageNumber-1)*20)};
+    Image.$_page.y={Image.PageLabel.y};
+    Image.$_page.anchor=_S;
+    Image.$_page.layer={currentSection!=""&currentSectionButton->label==$$.label?Image.PageLabel.layer:-1};
+    Image.$_page.wrapWidth={fontScale*1920};
+    Area.$_page.image="Image.$_page";
+    Area.$_page.boxPick=true;
+    Area.$_page.state={Area.$_page.hover?"hover":"plain"};
+    Trigger.$_press.test={Area.$.press|Area.$_page.press};
+    Trigger.$_press.exec={$$.exec()};
+    currentSection==""&!startWith3D?$$.exec();
+  }
+>>
+Trigger.SmallMode.test={!fullMode}
+Trigger.SmallMode.exec={ClickOnReset();currentBeautyShot!=""?Scene.3d.playInstantly(currentBeautyShot)}
+
+ChangeTrigger.ChangeSection.test={currentSection}
+ChangeTrigger.ChangeSection.exec={
+    Image.SectionContent.label={currentSectionButton->sectionText};
+    Image.SectionContent.alpha=-0.6;
+}
+
+Image.TourButton<<
+  .parent="Image.SectionButtons"
+  .x={sectionButtonCounter==0?0:sectionLayout[sectionButtonCounter-1]->right};
+  .label={l10n("Tour")}
+  .exec={Trigger.Start3D.exec()}
+  .layer={Scene.3d.absVisible&!ipadMode&sectionLayout!=[]?1:-1}
+  .anchor=_NW
+  .states=["plain","hover"]
+  .text={"%SectionButton_#{"~$$$.label~"}"}
+  .showActive={fullMode&!ipadMode}
+  .wrapWidth={500*fontScale}
+  .init={
+    Area.TourButton.image="$$$";
+    Area.TourButton.state={$$$.showActive?"hover":"plain"};
+    Area.TourButton.boxPick=true;
+    Area.TourButton.cursor=HAND;
+    Image.TourButton_bg.parent="Image.SectionButtons";
+    Image.TourButton_bg.x={$$$.x};
+    Image.TourButton_bg.y={$$$.y};
+    Image.TourButton_bg.width={$$$.width};
+    Image.TourButton_bg.height={insetBottom-$$$.absY};
+    Image.TourButton_bg.buffer={colorTheme};
+    Image.TourButton_bg.layer={$$$.showActive?0:-1};
+    Trigger.TourButton_press.test={Area.TourButton.press};
+    Trigger.TourButton_press.exec={$$$.exec()};
+  }
+  .init()
+>>
+
+
+allScriptButtons=[]
+randomScripts=[]
+productTitleBottom={ipadMode?fontScale*8:Image.ProductTitle.height+13}
+lastScriptButtonBottom={#l=Meson.length(allScriptButtons);#l==0?productTitleBottom:allScriptButtons[#l-1]->bottom}
+
+randomMethod=Meson.getMethod(^class="java.lang.Math",^method="random",^args=[])
+random={#r=Meson.floor(#arg*Meson.callMethod(^method=randomMethod,^args=[]));#r==#arg?#r-1:#r}
+random01={Meson.callMethod(^method=randomMethod,^args=[])}
+nextDemoScript=""
+highlightScript=""
+Trigger.RunAnyScript.test={(attractMode|autoRunMode)&nextDemoScript==""&allPlayingScripts==[]&randomScripts!=[]}
+Trigger.RunAnyScript.exec={Timer.RunLater.start();currentTip="";nextDemoScript=currentTip=randomScripts[random(Meson.length(randomScripts))]}
+Timer.RunLater.delay=1.5
+Timer.RunLater.exec={(attractMode|autoRunMode)?nextDemoScript->runDemo();nextDemoScript=""}
+Trigger.PickAnyModel.test={attractMode&ckpt==""&allProducts!=[]}
+Trigger.PickAnyModel.exec={
+  !(allProducts[random(Meson.length(allProducts))]->select())?Trigger.PickAnyModel.exec():Timer.ChangeModel.start()
+}
+Timer.ChangeModel<<
+  .delay=ATTRACT_MODEL_SWITCH_MINUTES*60
+  .exec={attractMode?(startOver();Trigger.PickAnyModel.exec())}
+>>
+
+ActionLabelLayout.extends=""
+ActionLabelLayout.Class<<
+  .imageAnchor=_NW
+  .imageX=0
+  .imageY=0
+  .textAnchor=_NW
+  .textX=0
+  .textY=0
+  .width=0
+  .height=0
+>>
+
+tiMaxWidth={("ActionLabelText."~#inst~"_text")->width > ("ActionLabelImage."~#inst~"_image")->width ? ("ActionLabelText."~#inst~"_text")->width : ("ActionLabelImage."~#inst~"_image")->width}
+tiMaxHeight={("ActionLabelText."~#inst~"_text")->height > ("ActionLabelImage."~#inst~"_image")->height ? ("ActionLabelText."~#inst~"_text")->height : ("ActionLabelImage."~#inst~"_image")->height}
+tiSumWidth={("ActionLabelText."~#inst~"_text")->width + ("ActionLabelImage."~#inst~"_image")->width}
+tiSumHeight={("ActionLabelText."~#inst~"_text")->height + ("ActionLabelImage."~#inst~"_image")->height}
+
+ActionLabelLayout.L<<
+  .imageAnchor=_NW
+  .imageX=0
+  .imageY=0
+  .textAnchor=_NW
+  .textX=0
+  .textY=0
+  .width={tiMaxWidth(^inst=#inst)}
+  .height={tiMaxHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Ltopcenter<<
+  .imageAnchor=_N
+  .imageX={("ActionLabel."~#inst)->width / 2}
+  .imageY=0
+  .textAnchor=_N
+  .textX={("ActionLabel."~#inst)->width / 2}
+  .textY={("ActionLabelImage."~#inst~"_image")->height}
+  .width={tiMaxWidth(^inst=#inst)}
+  .height={tiSumHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Ltopleft<<
+  .imageAnchor=_NW
+  .imageX=0
+  .imageY=0
+  .textAnchor=_NW
+  .textX=0
+  .textY={("ActionLabelImage."~#inst~"_image")->height}
+  .width={tiMaxWidth(^inst=#inst)}
+  .height={tiSumHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Ltopright<<
+  .imageAnchor=_NE
+  .imageX={("ActionLabel."~#inst)->width}
+  .imageY=0
+  .textAnchor=_NE
+  .textX={("ActionLabel."~#inst)->width}
+  .textY={("ActionLabelImage."~#inst~"_image")->height}
+  .width={tiMaxWidth(^inst=#inst)}
+  .height={tiSumHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Lbottomcenter<<
+  .imageAnchor=_N
+  .imageX={("ActionLabel."~#inst)->width / 2}
+  .imageY={("ActionLabelText."~#inst~"_text")->height}
+  .textAnchor=_N
+  .textX={("ActionLabel."~#inst)->width / 2}
+  .textY=0
+  .width={tiMaxWidth(^inst=#inst)}
+  .height={tiSumHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Lbottomleft<<
+  .imageAnchor=_NW
+  .imageX=0
+  .imageY={("ActionLabelText."~#inst~"_text")->height}
+  .textAnchor=_NW
+  .textX=0
+  .textY=0
+  .width={tiMaxWidth(^inst=#inst)}
+  .height={tiSumHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Lbottomright<<
+  .imageAnchor=_NE
+  .imageX={("ActionLabel."~#inst)->width}
+  .imageY={("ActionLabelText."~#inst~"_text")->height}
+  .textAnchor=_NE
+  .textX={("ActionLabel."~#inst)->width}
+  .textY=0
+  .width={tiMaxWidth(^inst=#inst)}
+  .height={tiSumHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Lleftcenter<<
+  .imageAnchor=_W
+  .imageX=0
+  .imageY={("ActionLabel."~#inst)->height / 2}
+  .textAnchor=_W
+  .textX={("ActionLabelImage."~#inst~"_image")->width}
+  .textY={("ActionLabel."~#inst)->height / 2}
+  .width={tiSumWidth(^inst=#inst)}
+  .height={tiMaxHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Llefttop<<
+  .imageAnchor=_NW
+  .imageX=0
+  .imageY=0
+  .textAnchor=_NW
+  .textX={("ActionLabelImage."~#inst~"_image")->width}
+  .textY=0
+  .width={tiSumWidth(^inst=#inst)}
+  .height={tiMaxHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Lleftbottom<<
+  .imageAnchor=_SW
+  .imageX=0
+  .imageY={("ActionLabel."~#inst)->height}
+  .textAnchor=_SW
+  .textX={("ActionLabelImage."~#inst~"_image")->width}
+  .textY={("ActionLabel."~#inst)->height}
+  .width={tiSumWidth(^inst=#inst)}
+  .height={tiMaxHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Lrightcenter<<
+  .imageAnchor=_W
+  .imageX={("ActionLabelText."~#inst~"_text")->width}
+  .imageY={("ActionLabel."~#inst)->height / 2}
+  .textAnchor=_W
+  .textX=0
+  .textY={("ActionLabel."~#inst)->height / 2}
+  .width={tiSumWidth(^inst=#inst)}
+  .height={tiMaxHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Lrighttop<<
+  .imageAnchor=_NW
+  .imageX={("ActionLabelText."~#inst~"_text")->width}
+  .imageY=0
+  .textAnchor=_NW
+  .textX=0
+  .textY=0
+  .width={tiSumWidth(^inst=#inst)}
+  .height={tiMaxHeight(^inst=#inst)}
+>>
+
+ActionLabelLayout.Lrightbottom<<
+  .imageAnchor=_SW
+  .imageX={("ActionLabelText."~#inst~"_text")->width}
+  .imageY={("ActionLabel."~#inst)->height}
+  .textAnchor=_SW
+  .textX=0
+  .textY={("ActionLabel."~#inst)->height}
+  .width={tiSumWidth(^inst=#inst)}
+  .height={tiMaxHeight(^inst=#inst)}
+>>
+
+ActionLabelText.extends="Image"
+ActionLabelText.Class<<
+    .inst=""
+    .states=["plain","hover"]
+    .anchor={$$.parent->layout->textAnchor(^inst=$$.inst)}
+    .x={$$.parent->layout->textX(^inst=$$.inst)}
+    .y={$$.parent->layout->textY(^inst=$$.inst)}
+    .layer=9
+    .text={$$.parent->textValue}
+    .enabled=false
+    .wrapWidth={1920*fontScale}
+    .new={
+      Area.$.image="$$";
+      Area.$.state={@("Area."~$$.inst~".state")};
+    }
+>>
+ActionLabelImage.extends="Image"
+ActionLabelImage.Class<<
+    .inst=""
+    .anchor={$$.parent->layout->imageAnchor(^inst=$$.inst)}
+    .x={$$.parent->layout->imageX(^inst=$$.inst)}
+    .y={$$.parent->layout->imageY(^inst=$$.inst)}
+    .layer={$$.file == "" ? -1 : 9}
+    .file={$$.parent->imageFile}
+    .dataSource="Data.ModelUI";
+    .enabled=false
+>>
+ActionLabel.extends="Image"
+ActionLabel.Class<<
+  .anchor=_S
+  .layout={"ActionLabelLayout.L"~l10n("$")->imagePlacement~l10n("$")->imageAlignment}
+  .width={$$.layout->width(^inst="$")}
+  .height={$$.layout->height(^inst="$")}
+  .textValue={l10n("$")->text}
+  .imageFile={l10n("$")->imageFile}
+  .enabled=false
+  .new={
+    ActionLabelText.$_text.parent="ActionLabel.$";
+    ActionLabelText.$_text.inst="$";
+    ActionLabelImage.$_image.parent="ActionLabel.$";
+    ActionLabelImage.$_image.inst="$";
+  }
+>>
+
+TrackUserAction={#arg!=""?(Data.UserTrack.parse=false;Data.UserTrack.url=#arg;Data.UserTrack.reset=true)}
+
+ActionTrigger.extends=""
+ActionTrigger.Class<<
+  .inst="$"
+  .script=""
+  .subGroup=""
+  .trackingURL=""
+  .trackingAddress=""
+  .onClick=""
+  .subMembers=["$$"]
+  .runnableInst="$"
+  .actionType=""
+  .jumpToTime=-1
+  .runnable=false
+  .hasScripts={^h=false;foreach(^elem="j";^in=$$.subMembers;^do={#j->script!=""?#h=true});^h}
+  .updateRunnable={($$.runnable=($$.hasScripts&allPlayingScripts==[]))?(^w="";$$.runnableInst="";foreach(^elem="j";^in=$$.subMembers;^do={Scene.3d.testPreconditions(#j->script)?(#w=true,$$.runnableInst=#j->inst)});$$.runnable=^w)}
+  .actionPress=false
+  .new={
+    Trigger.$.test={ActionTrigger.$.actionPress};
+    Trigger.$.exec={allPlayingScripts==[]?foreach(^elem="i";^in=$$.subMembers;^do={#i->script!=""?((#i->actionType=="still"?(Scene.3d.playStartSlow(#i->script)?Scene.3d.jumpToTime(^script=#i->script;^time=#i->jumpToTime)):Scene.3d.playStartSlow(#i->script))?TrackUserAction(#i->trackingURL))});recordAction($$.trackingAddress);$$.onClick()};
+    Ticker.$_urun.exec={ActionTrigger.$.updateRunnable()};
+    Ticker.$_urun.order=20;
+  }
+>>
+
+
+ImageBorder.extends=""
+ImageBorder.Class<<
+  .thickness=1
+  .color=black
+  .shadowColor={$$.color}
+  .highlightColor={$$.color}
+  .borderFor="Image.$"
+  .new={
+    Image.$_bt.parent={ImageBorder.$.borderFor};
+    Image.$_bt.buffer={ImageBorder.$.highlightColor};
+    Image.$_bt.x=0;
+    Image.$_bt.y={0-$$.thickness};
+    Image.$_bt.width={ImageBorder.$.borderFor->width};
+    Image.$_bt.height={$$.thickness};
+    Image.$_bb.parent={ImageBorder.$.borderFor};
+    Image.$_bb.buffer={ImageBorder.$.shadowColor};
+    Image.$_bb.x=0;
+    Image.$_bb.y={ImageBorder.$.borderFor->height};
+    Image.$_bb.width={ImageBorder.$.borderFor->width};
+    Image.$_bb.height={$$.thickness};
+    Image.$_bl.parent={ImageBorder.$.borderFor};
+    Image.$_bl.buffer={ImageBorder.$.highlightColor};
+    Image.$_bl.x={0-$$.thickness};
+    Image.$_bl.y={0-$$.thickness};
+    Image.$_bl.width={$$.thickness};
+    Image.$_bl.height={ImageBorder.$.borderFor->height+2*$$.thickness};
+    Image.$_br.parent={ImageBorder.$.borderFor};
+    Image.$_br.buffer={ImageBorder.$.shadowColor};
+    Image.$_br.x={ImageBorder.$.borderFor->width};
+    Image.$_br.y={0-$$.thickness};
+    Image.$_br.width={$$.thickness};
+    Image.$_br.height={ImageBorder.$.borderFor->height+2*$$.thickness};
+  }
+>>
+
+Style.ProductTitle<<
+  .color=white
+  .fontSize={fontScale*24}
+  .fontWeight=_BOLD
+  .marginTop={fontScale*20}
+  .marginLeft={fontScale*12}
+  .marginBottom={fontScale*13}
+  .marginRight={fontScale*12}
+  .lineSpacing={fontScale*6}
+>>
+Style.ProductSubTitle<<
+  .fontSize={fontScale*14}
+>>
+Image.ProductTitle<<
+  .parent="Image.ControlPanel"
+  .buffer={colorTheme}
+  .minWidth={fontScale*340}
+  .wrapWidth={fontScale*340}
+  .x={fontScale*10}
+  .y={fontScale*8}
+  .text={"%ProductTitle{"~currentProductTitle~(currentProductSubTitle==""?"":"%ProductSubTitle{\n"~currentProductSubTitle~"}")~"}"}
+  .enabled={compactLayout}
+  .layer={ipadMode?-1:0}
+>>
+Image.FlyoutBox<<
+  .parent="Image.ProductTitle"
+  .x={Image.ProductTitle.width}
+  .y=0
+  .layer={compactLayout&stashControlPanel?0:-1}
+  .anchor=_NE
+  .file="img/flyout.png"
+  .enabled=false
+>>
+Area.ProductTitle<<
+  .image="Image.ProductTitle"
+  .cursor=HAND
+>>
+Trigger.ProductTitle_press.test={Area.ProductTitle.press|(stashControlPanel&Area.ProductTitle.hover&allPlayingScripts==[])}
+Trigger.ProductTitle_press.exec={stashControlPanel=!stashControlPanel}
+
+Trigger.AutoStash.test={compactLayout&!autoRunMode&allPlayingScripts!=[]}
+Trigger.AutoStash.exec={stashControlPanel=true}
+Trigger.AutoUnStash.test={compactLayout&fullMode|!compactLayout}
+Trigger.AutoUnStash.exec={stashControlPanel=false}
+
+Meson.powMethod=Meson.getMethod(^class="java.lang.Math";^method="pow";^args=["double","double"])
+Meson.pow={Meson.callMethod(^method=Meson.powMethod;^args=#arg)}
+
+elastic{ #o = 3; #k = 1; #t = 0; } = {  
+        #d  = 1 / (2 * #k * #o);                      
+        #t < #d ? (
+            1 - Meson.cos( #t / #d * 1.57079 );     
+        ) : (
+            #c  = (#t - #d) / (1 - #d);
+            #ce = Meson.pow([ (1 - #c), 2.71828 ]);
+            #sc = Meson.sin(#c * 6.28318 * (#o - #d));
+            1 + #ce * #sc * (#k / 2.71828); 
+        );
+    }    
+over_out{ #s = 1.70158; #t = 0; } = {
+        #n = #t - 1;
+        #n * #n * ((#s + 1) * #n + #s) + 1;
+    }
+bloopIO={#t<0?#t:#inout?elastic(^t=#t,^o=2):over_out(^t=#t,^s=2)}
+
+showAnimations=false
+tightScriptButtons=false
+
+Image.ControlPanel<<
+  .anchor={ipadMode?_SE:_NW}
+  .layer={!screenSaverActive&!initMode&fullMode&$$$.scaleY>0?1:-1}
+  .width={fontScale*358}
+  .height={lastScriptButtonBottom+(ipadMode?3:171)*fontScale}
+  .buffer="efefef"
+  .x={ipadMode?Image.Animations.xNE:insetLeft+40}
+  .goalY={ipadMode?Image.Animations.yNE:stashControlPanel?theDisplay->height-productTitleBottom:insetBottom/2-$$$.height/2}
+  .y=$$$.goalY
+  .bloop={ipadMode?0:1}
+  .scaleY={!ipadMode?1:bloopIO(^inout=showAnimations,^t=$$$.bloop)}
+>>
+Trigger.CPTooBig.test={lastScriptButtonBottom>theDisplay->height*0.8}
+Trigger.CPTooBig.exec={tightScriptButtons=true}
+Anim.SquashCP<<
+  .attr=["Image.ControlPanel.bloop"]
+  .goal={showAnimations|!ipadMode?1:0}
+  .rate=2
+>>
+Image.CPanelShadow<<
+  .parent="Image.ControlPanel"
+  .file="img/control_shadow.png"
+  .x=-10
+  .y={Image.ControlPanel.height+20}
+  .layer={ipadMode?-1:0}
+>>
+Anim.CPFly<<
+  .attr=["Image.ControlPanel.y"]
+  .goal={[Image.ControlPanel.goalY]}
+  .rate=2000
+>>
+Image.CPN<<
+  .parent="Image.ControlPanel"
+  .width={Image.ControlPanel.width}
+  .height=1
+  .buffer="cecccc"
+  .x=0
+  .y=-1
+>>
+Image.CPS<<
+  .parent="Image.ControlPanel"
+  .width={Image.ControlPanel.width}
+  .height=1
+  .buffer="cecccc"
+  .x=0
+  .y={Image.ControlPanel.height+1}
+>>
+Image.CPW<<
+  .parent="Image.ControlPanel"
+  .height={Image.ControlPanel.height+2}
+  .width=1
+  .buffer="cecccc"
+  .x=-1
+  .y=-1
+>>
+Image.CPE<<
+  .parent="Image.ControlPanel"
+  .height={Image.ControlPanel.height+2}
+  .width=1
+  .buffer="cecccc"
+  .x={Image.ControlPanel.width+1}
+  .y=-1
+>>
+Image.CPanelShadow2<<
+  .parent={Image.ControlPanel.parent}
+  .buffer="1000"
+  .x={Image.ControlPanel.xSW-2}
+  .y={Image.ControlPanel.ySW-3}
+  .width={Image.ControlPanel.width+5}
+  .height={6+fontScale*11}
+  .softEdge=3
+  .layer={ipadMode?Image.ControlPanel.layer-0.5:-1}
+>>
+
+Style.IPadTool<<
+  .color=black
+  .fontWeight=_BOLD
+  .fontSize=12
+>>
+
+Image.Animations<<
+  .file="img/animations.png"
+  .x={insetRight-40}
+  .y={insetBottom-20}
+  .anchor=_SE
+  .layer={ipadMode&(allScriptButtons!=[])?0:-1}
+>>
+Image.AnimationsLabel<<
+  .parent="Image.Animations"
+  .text={"%IPadTool{"~l10n("Features")~"}"}
+  .anchor=_S
+  .x={Image.Animations.width/2}
+  .y={Image.Animations.height-10}
+  .enabled=false
+>>
+Area.Animations.image="Image.Animations"
+Trigger.Animations_press.test={Area.Animations.press}
+Trigger.Animations_press.exec={!fullMode?(Trigger.Start3D.exec());showAnimations=!showAnimations}
+Trigger.DismissAnimations.test={theDisplay->press&!Area.Animations.press}
+Trigger.DismissAnimations.exec={showAnimations=false}
+
+Style.Script<<
+  .fontSize={ipadMode?22:fontScale*(tightScriptButtons?14:18)}
+  .color="4a4949"
+  .margin={fontScale*(tightScriptButtons?5:13)}
+  .borderColor="d9d9d9"
+  .borderThickness=1
+  .lineSpacing={fontScale*4}
+>>
+Style.Config<<
+  .fontSize={ipadMode?22:fontScale*(tightScriptButtons?14:18)}
+  .fontWeight=_BOLD
+  .color="4a4949"
+  .margin={fontScale*(tightScriptButtons?5:13)}
+  .borderColor="d9d9d9"
+  .borderThickness=1
+  .lineSpacing={fontScale*4}
+>>
+Style.Heading<<
+  .fontSize={ipadMode?22:fontScale*(tightScriptButtons?14:18)}
+  .fontWeight=_BOLD
+  .color="4a4949"
+  .margin={fontScale*(tightScriptButtons?5:13)}
+  .borderColor=clear
+  .borderThickness=1
+  .lineSpacing={fontScale*4}
+>>
+Style.ScriptTip<<
+  .fontSize={ipadMode?18:fontScale*15}
+  .color={colorTheme}
+  .textAlign=_RIGHT
+>>
+
+Image.ScriptArrow<<
+  .parent="Image.ControlPanel"
+  .file="img/arrow2a.png"
+  .layer={ipadMode|fontScale!=1|tightScriptButtons|currentTip==""|currentTip->alpha<1|!currentTip->showTip?-1:99}
+  .x={fontScale*349}
+  .y={currentTip->y}
+>>
+Image.ScriptArrow2<<
+  .parent="Image.ScriptArrow"
+  .file="img/arrow2.png"
+  .y={currentTip->height-49}
+>>
+Style.ColorSans<<
+  .fontFamily=["SansSerif"]
+  .color={colorTheme}
+  .fontSize=24
+>>
+Image.ScriptArrowText<<
+  .parent="Image.ScriptArrow2"
+  .text="%ColorSans{→}"
+  .x=19
+  .y=25
+  .anchor=_C
+>>
+Trigger.EndScriptArrow.test={Area.3d.press}
+Trigger.EndScriptArrow.exec={currentTip=""}
+
+ScriptButton.extends=["ActionTrigger", "ActionLabel"]
+ScriptButton.Class<<
+  .parent="Image.ControlPanel"
+  .place=0
+  .x={10*fontScale}
+  .y={$$.place==0?productTitleBottom:(allScriptButtons[$$.place-1]->bottom)}
+  .bottom={$$.y+$$.scaleY*(5+$$.height)}
+  .layer=1
+  .anchor=_NW
+  .tip={#t=l10n($$.runnableInst)->tipText;#t==""?"Show":#t}
+  .enabled={Scene.3d.enabled&allPlayingScripts==[]&$$.runnable}
+  .showTip={Meson.touchScreen|ipadMode|autoRunMode|Area.$.hover}
+  .alpha={(!$$.hasScripts|$$.enabled|autoRunMode)?1:0.25}
+  .actionPress={Area.$.press}
+  .style="Script"
+  .textValue={"%"~$$.style~"{"~l10n("$")->text~"}"}
+  .runDemo={Trigger.$.exec()}
+  .bloop={ipadMode?1:0}
+  .scaleX={attractMode|autoRunMode|$$.bloop==1?1:$$.bloop<0?0:bloop($$.bloop)}
+  .scaleY={$$.scaleX}
+  .layer={$$.scaleX<=0?-1:25}
+  .trackingAddress={URLEncode(inEnglish("$")->text~" "~inEnglish($$.runnableInst)->tipText)}
+  .buffer=white
+  .textWrap={ipadMode?250:fontScale*(tightScriptButtons?280:200)}
+  .new={
+    $$.place=Meson.length(allScriptButtons);
+    allScriptButtons=allScriptButtons++["$$"];
+    $$.bloop=(-10-0.15*$$.place);
+    Image.$_text.minWidth={fontScale*340};
+    Image.$_text.minHeight={tightScriptButtons?0:(fontScale*50)};
+    Image.$_text.wrapWidth={$$.textWrap};
+    Image.$_tip.parent="$$";
+    Image.$_tip.enabled=false;
+    Image.$_tip.text={"%ScriptTip{"~$$.tip~"}"};
+    Image.$_tip.layer={$$.showTip?0:-1};
+    Image.$_tip.anchor=_E;
+    Image.$_tip.x={fontScale*327};
+    Image.$_tip.y={(ipadMode?$$.height:(($$.height>50?($$.height-50):0)+$$.height))/2};
+    Image.$_tip.wrapWidth={fontScale*100};
+    Area.$.image="ScriptButton.$";
+    Area.$.cursor={HAND};
+    Trigger.$_tip.test={Area.$.hover};
+    Trigger.$_tip.exec={currentTip="$$"};
+    Anim.$_bloop.attr=["$$.bloop"];
+    Anim.$_bloop.goal=[1];
+    Anim.$_bloop.rate=4;
+    Anim.$_bloop.enabled={fullMode|ipadMode};
+    Trigger.$_reset.test={!fullMode&!ipadMode};
+    Trigger.$_reset.exec={$$.bloop=-2-0.15*$$.place};
+  }
+>>
+
+HeadingButton.extends="ScriptButton"
+HeadingButton.Class<<
+  .buffer=""
+  .style="Heading"
+  .textWrap={fontScale*340};
+  .tip=""
+>>
+
+360Button.extends="ScriptButton"
+360Button.Class<<
+  .rate=30
+  .enabled={Scene.3d.enabled&allPlayingScripts==[]&!panLocked}
+  .runnableInst="$"
+  .hasScripts=true
+  .runDemo={Ticker.Spin_$.order=1}
+  .new={
+    Trigger.$_360.test={ActionTrigger.$.actionPress};
+    Trigger.$_360.exec={Ticker.Spin_$.order=0-Ticker.Spin_$.order};
+    Ticker.Spin_$.order=-1;
+    Ticker.Spin_$.exec={!scriptsPaused?(View.3d.desiredTheta=View.3d.desiredTheta+Meson.frameStep*$$.rate)};
+    ChangeTrigger.$_end360.test={ResetSerial+((allPlayingScripts!=[])?1000:-1000)};
+    ChangeTrigger.$_end360.exec={Ticker.Spin_$.order=-1};
+  }
+>>
+
+HotSpot.Class.enabled=true;
+
+lastHotSpot=""
+
+HotImage.extends="ActionLabel"
+HotImage.Class<<
+  .x={#x=Scene.3d.absX+HotSpot.3d_$.x;#x-$$.anchorX<10?10+$$.anchorX:#x+$$.width-$$.anchorX>Display.Primary.width-10?Display.Primary.width-10-$$.width+$$.anchorX:#x}
+  .y={Scene.3d.absY+(HotSpot.3d_$.y-$$.floatUpBy*(($$.anchor=="_SE"|$$.anchor=="_S"|$$.anchor=="_SW")?1:-1))}
+  .floatUpBy=25
+  .anchor={"_"~(HotSpot.3d_$.y>($$.height+$$.floatUpBy)?"S":"N")~(HotSpot.3d_$.x<($$.width/2)?"W":(HotSpot.3d_$.x+$$.width/2)>Display.Primary.width?"E":"")}
+  .layer={$$.scaleX==0?-1:HotImage.$.forceShow|HotSpotButton.$.active&$$.hovering?100:99}
+  .hover2D={showNotes?(
+    #x=Image.3d.mouseX-HotSpot.3d_$.x+Image.HSIndicator.anchorX;
+    #x>HSMargin&#x<Image.HSIndicator.width-HSMargin?(
+      #y=Image.3d.mouseY-HotSpot.3d_$.y+Image.HSIndicator.anchorY;
+      #y>HSMargin&#y<Image.HSIndicator.height-HSMargin
+   ))}
+  .hovering={hsStyle==_3D?HotSpot.3d_$.hover:HotSpotButton.$.active&$$.hover2D}
+  .showFlag={HotSpotButton.$.active&!$$.hovering}
+  .enabled=false
+  .forceShow=false
+  .buffer=white
+  .textValue={"%Sidecar{"~l10n("$")->text~"}"}
+  .showme={HotImage.$.forceShow|HotSpotButton.$.mouseOver&Area.3d.hover&!Area.3d.press&$$.hovering}
+  .vis=0
+  .scaleX={bloop(^inout=$$.showme,^t=$$.vis)}
+  .scaleY={$$.scaleX}
+  .wrapWidth=""
+  .new={
+    Image.HSIndicator.offsets=Image.HSIndicator.offsets++[{HotImage.$.showFlag?HotSpot.3d_$.x:_N},{HotSpot.3d_$.y}];
+    Image.$_text.tabStops={[50*fontScale,80*fontScale,110*fontScale]};
+    Image.$_text.wrapWidth={($$.wrapWidth==""?400:$$.wrapWidth)*fontScale};
+    Anim.$_inout.attr="$$.vis";
+    Anim.$_inout.rate={$$.showme?2:4};
+    Anim.$_inout.goal={$$.showme?1:0};
+    ImageBorder.$.color="66272928";
+    ImageBorder.$.thickness=5;
+    Image.$_pt.enabled=false;
+    Image.$_pt.parent="$$";
+    Image.$_pt.anchor=_C;
+    Image.$_pt.layer={($$.anchor==_N|$$.anchor==_S)&$$.width>0?0:-1};
+    Image.$_pt.x={$$.anchorX};
+    Image.$_pt.y={$$.anchorY};
+    Image.$_pt.buffer={$$.buffer};
+    Image.$_pt.width=15;
+    Image.$_pt.height=15;
+    Image.$_pt.angle=45;
+  }
+>>
+
+allHotSpotButtons=[]
+
+HotSpotButton.extends=["HotSpotRT", "ActionTrigger"]
+HotSpotButton.Class<<
+  .actionPress={HotSpot.3d_$.enabled&HotSpot.3d_$.press}
+  .active={($$.runnable|$$.script=="")&$$.mouseOver&HotSpot.3d_$.visible&allPlayingScripts==[]}
+  .mouseOver=true
+  .armed={$$.runnable&$$.mouseOver&HotSpot.3d_$.hover}
+  .force=""
+  .isForced={$$.force!="" & @("SceneState.3d."~$$.force[0])==$$.force[1]}
+  .updateEveryFrame={$$.isForced}
+  .place=-1
+  .wrapWidth=""
+  .new={
+    HotImage.$.buffer;
+    Trigger.Block_$HS.test={Area.3d.press&!HotSpot.3d_$.press};
+    Trigger.Block_$HS.exec={HotSpot.3d_$.enabled=false};
+    Trigger.Unblock_$HS.test={!Area.3d.press};
+    Trigger.Unblock_$HS.exec={HotSpot.3d_$.enabled=true};
+    $$.place=Meson.length(allHotSpotButtons);
+    allHotSpotButtons=allHotSpotButtons++"$$";
+  }
+>>
+
+
+FilterEffect.HSWhiteFilter<<
+  .color={white}
+  .blur=-2
+  .alpha=0.5
+>>
+FilterEffect.HSColorFilter2<<
+  .color={colorTheme}
+  .blur=0.1
+>>
+FilterDropShadow.HSShadowFilter<<
+  .x=0
+  .y=1
+  .alpha=1
+>>
+HSMargin=17
+Image.HSIndicator<<
+  .file="img/hot.png"
+  .parent="Scene.3d"
+  .anchorX=32
+  .anchorY=61
+  .enabled=false
+  .layer={fullMode&showNotes?1:-1}
+  .bloop=0
+  .scaleX={#b=bloop($$$.bloop);#b=#b*#b;#b=#b*#b;#b=#b*#b;#b*#b}
+  .scaleY={$$$.scaleX}
+>>
+FilteredImage.HSIndicator.effectPipeline=["FilterEffect.HSShadowFilter",filterNoEffect,"FilterEffect.HSWhiteFilter","FilterEffect.HSColorFilter2"]
+Anim.HSIAlpha<<
+  .attr="Image.HSIndicator.bloop"
+  .rate=1
+  .goal={showNotes?1:0}
+>>
+
+thetaSnapAng={thetaSnap==1?180:360/thetaSnap}
+ChangeTrigger.ThetaSnap.test={(thetaSnap<1|theDisplay->press)?0:View.3d.desiredTheta}
+ChangeTrigger.ThetaSnap.exec={ChangeTrigger.ThetaSnap.test!=0?(
+  View.3d.desiredTheta=thetaSnapAng*Meson.round(View.3d.desiredTheta/thetaSnapAng);
+  View.3d.desiredPhi=0;
+)}
+
+panLock={thetaSnap==1}
+panLocked={panLock&(allPlayingScripts==[])}
+hasHotSpots=false
+
+Trigger.PanLock.test={panLocked&(Scene.3d.mode!=_MOVE)}
+Trigger.PanLock.exec={Scene.3d.mode=_MOVE}
+Trigger.PanUnlock.test={!panLocked}
+Trigger.PanUnlock.exec={Scene.3d.mode=_ROTATE}
+
+FilterDilate.DilateColorFilter<<
+  .color={colorTheme}
+  .dilate=3
+>>
+FilteredImage.Tools<<
+  .parent="Image.ControlPanel"
+  .file="img/cpanel.png"
+  .y={Image.ControlPanel.height-8}
+  .x={10*fontScale}
+  .anchor=_SW
+  .states=["off","on"]
+  .scaleX={fontScale}
+  .scaleY={fontScale}
+  .layer={ipadMode?-1:0}
+  .effectPipeline=["FilterEffect.DilateColorFilter",filterNoEffect]
+>>
+Anim.FadeTools<<
+  .attr=["Image.Tools.alpha"]
+  .goal=[1]
+  .rate=2
+>>
+Trigger.FadeToolsStart.test={fullMode}
+Trigger.FadeToolsStart.exec={Image.Tools.alpha=-2}
+
+Style.Tool<<
+  _off.fontSize={l10n("toolFontSize")*fontScale}
+  _off.color="4a4949"
+  _on.fontSize={l10n("toolFontSize")*fontScale}
+  _on.color={colorTheme}
+>>
+
+ToolButton.extends="Area"
+ToolButton.Class<<
+  .image="Image.Tools"
+  .active=false
+  .boxPick=true
+  .state={$$.active?"on":"off"}
+  .cursor=HAND
+  .y=105
+  .width=68
+  .height=48
+  .new={
+    Image.$_lbl.parent="Image.Tools";
+    Image.$_lbl.anchor=_S;
+    Image.$_lbl.x={$$.x+$$.width/2};
+    Image.$_lbl.y={$$.y+$$.height-2};
+    Image.$_lbl.text={"%Tool_#{"~l10n("$")~"}"};
+    Image.$_lbl.states=["off","on"];
+    Image.$_lbl.enabled=false;
+    Image.$_lbl.alpha={$$.enabled?1:0.25};
+    Image.$_lbl.scaleX={1/fontScale};
+    Image.$_lbl.scaleY={1/fontScale};
+    Image.$_lbl.wrapWidth={1000*fontScale};
+    Area.$_lbl.image="Image.$_lbl";
+    Area.$_lbl.state={$$.state};
+    Trigger.$_press.test={$$.press};
+    Trigger.$_press.exec={ClickOn$()};
+  }
+>>
+
+ToolButton.Move.x=202
+ToolButton.Move.active={Scene.3d.mode==_MOVE}
+ToolButton.Turn.x=132
+ToolButton.Turn.active={Scene.3d.mode==_ROTATE}
+ToolButton.Turn.enabled={!panLocked}
+ToolButton.Measure.x=271
+ToolButton.Measure.active={Scene.3d.mode==_MEASURE}
+ToolButton.Measure.enabled={includeMeasure&!panLocked}
+ToolButton.Reset.x=1
+ToolButton.Reset.y=55
+ToolButton.Reset.height=98
+ToolButton.Reset.active={Area.Reset.press}
+ToolButton.Auto.x=1
+ToolButton.Auto.y=1
+ToolButton.Auto.height=25
+ToolButton.Auto.active={autoRunMode}
+ToolButton.Notes.x=133  
+ToolButton.Notes.y=1
+ToolButton.Notes.width=206
+ToolButton.Notes.height=25
+ToolButton.Notes.active={showNotes}
+ToolButton.Notes.enabled={hasHotSpots}
+Image.Notes_lbl.alpha={hasHotSpots?1:0.2}
+Image.Notes_lbl.text={"%Tool_#{"~(showNotes?l10n("NoNotes"):l10n("Notes"))~"}"};
+
+zoomIndex={#f=(View.3d.maxFOV-View.3d.minFOV);#f==0?1:1+4*(View.3d.maxFOV-View.3d.fov)/#f}
+setZoomIndex={#a=(#arg-1)/4;View.3d.setDesiredFov(#a*View.3d.minFOV + (1-#a)*View.3d.maxFOV)}
+
+FilterEffect.ColorFilter<<
+  .color={colorTheme}
+  .blur=0.25
+>>
+
+ZoomButton.extends="FilteredImage"
+ZoomButton.Class<<
+  .parent="Image.Tools"
+  .index=1
+  .file={"img/z"~Meson.round($$.index)~".png"}
+  .y=60
+  .alpha={#a=(zoomIndex-$$.index)*0.9;#a<0?1+#a:1-#a}
+  .enabled=false
+  .effectPipeline=["FilterEffect.ColorFilter"]
+  .new={
+    Area.$.image="Image.Tools";
+    Area.$.x={$$.x+$$.width/2-20};
+    Area.$.width=40;
+    Area.$.y=56;
+    Area.$.height=28;
+    Area.$.boxPick=true;
+    Area.$.cursor=HAND;
+    Trigger.$_press.test={Area.$.press};
+    Trigger.$_press.exec={setZoomIndex($$.index);Scene.3d.mode=($$.index==1?_ROTATE:_MOVE)};
+  }
+>>
+ZoomButton.Zoom1.index=1
+ZoomButton.Zoom1.x=145
+ZoomButton.Zoom2.index=2
+ZoomButton.Zoom2.x=185
+ZoomButton.Zoom3.index=3
+ZoomButton.Zoom3.x=226
+ZoomButton.Zoom4.index=4
+ZoomButton.Zoom4.x=267
+ZoomButton.Zoom5.index=5
+ZoomButton.Zoom5.x=308
+Image.ZoomLabel<<
+  .parent="Image.Tools"
+  .anchor=_NE
+  .x=342
+  .y=83
+  .scaleX={1/fontScale}
+  .scaleY={1/fontScale}
+  .text={"%Tool_off{"~l10n("Zoom")~"}"}
+>>
+
+ResetSerial=0
+ClickOnReset={foreach(^elem="i";^in=allPlayingScripts;^do={#i->stop});Scene.3d.playInstantly(Scene.3d.runtime->getInitID());currentTip="";autoRunMode=false;ResetSerial=ResetSerial+1;}
+ClickOnMeasure={Scene.3d.mode=_MEASURE}
+ClickOnMove={Scene.3d.mode=_MOVE}
+ClickOnTurn={Scene.3d.mode=_ROTATE}
+ClickOnZoom={Scene.3d.distance=0}
+ClickOnAuto={autoRunMode=!autoRunMode;!autoRunMode?ClickOnReset()}
+ClickOnNotes={showNotes=!showNotes}
+
+Image.Measure0<<
+  .file="img/measure.gif"
+  .parent="Scene.3d"
+  .layer={Scene.3d.mode==_MEASURE&Scene.3d.distance>0?1:-1}
+  .anchor=_C
+  .x={Scene.3d.pressX}
+  .y={Scene.3d.pressY}
+>>
+
+Image.Measure1<<
+  .file="img/measure.gif"
+  .parent="Scene.3d"
+  .layer={Scene.3d.mode==_MEASURE&Scene.3d.distance>0?1:-1}
+  .anchor=_C
+  .x={Scene.3d.dragX}
+  .y={Scene.3d.dragY}
+>>
+
+Style.Dist<<
+  .fontSize=32
+  .color="29240e"
+  .dropShadow=white
+  .lineSpacing=5
+>>
+
+Image.Distance<<
+  .parent="Scene.3d"
+  .text={"%Dist{"~(Scene.3d.distance==0?l10n(Meson.touchScreen?"dragTouch":"dragMouse"):l10n("approx")~Raster.formatFloat(^value=Scene.3d.distance*Scene.3d.inch,^format=0.1)~" "~l10n("in")~"\n"~l10n("approx")~Raster.formatFloat(^value=Scene.3d.distance*Scene.3d.cm,^format=0.1)~" "~l10n("cm"))~"}"}
+  .layer={Scene.3d.mode==_MEASURE?1:-1}
+  .anchor=_S
+  .minX={Image.Distance.width/2}
+  .maxX={Scene.3d.width-Image.Distance.width/2}
+  .x={Scene.3d.distance==0?(#x=Scene.3d.width):(#x=(Image.Measure0.x+Image.Measure1.x)/2);#x<Image.Distance.minX?Image.Distance.minX:#x>Image.Distance.maxX?Image.Distance.maxX:#x}
+  .y={Scene.3d.distance==0?Scene.3d.height/2:(Image.Measure0.y+Image.Measure1.y)/2-10}
+>>
+
+currentProductTitle=""
+currentProductSubTitle=""
+
+Style.Sup<<
+  .offsetYm=-0.55
+  .fontSize=0.66
+>>
+Style.Sup2<<
+  .offsetYm=-0.33
+  .fontSize=0.77
+>>
+Style.Sub<<
+  .offsetYm=0.55
+  .fontSize=0.66
+>>
+Style.Sidecar<<
+  .fontSize={(language=="fr"?18:20)*fontScale}
+  .color="4a4949"
+  .textAlign=_LEFT
+  .lineSpacing={8*fontScale}
+  .marginTop={15*fontScale}
+  .marginLeft={20*fontScale}
+  .marginRight={35*fontScale}
+  .marginBottom={25*fontScale}
+>>
+Style.SidecarTitle<<
+  .fontSize={26*fontScale}
+  .color={colorTheme}
+  .marginTop=20
+  .textAlign=_LEFT
+>>
+
+Style.Link<<
+  .area="Link"
+  .fontSize=0.9
+  .textDecoration={!doQR?_UNDERLINE:_NONE}
+  .marginLeft={!doQR|Meson.version<9.8?Style.Class.marginLeft:116}
+  .marginBottom={!doQR|Meson.version<9.8?Style.Class.marginBottom:60}
+>>
+Link.extends="Area"
+Link.Class<<
+  .state={$$.hover?"hover":"plain"}
+  .url=""
+  .lastImage=""
+  .init={
+    $$.url=#arg;
+    // This trigger allows link IDs to be reused
+    // Note that cross-fading sidecars must be avoided when link IDs are re-used, so they don't waffle back and forth
+    ChangeTrigger.$_rbi.test={$$.image};
+    ChangeTrigger.$_rbi.exec={$$.lastImage!=""?$$.lastImage->rebuild=true;$$.lastImage=$$.image};
+    $$.hover={$$.mouseHover}; // Reset this in init, since it is going to be extended repeatedly because of what we just did.
+    doQR?(
+      QRImage.$_qr.qr={$$.url};
+      QRImage.$_qr.parent={$$.image};
+      QRImage.$_qr.x={$$.x-6};
+      QRImage.$_qr.y={$$.y+6};
+      QRImage.$_qr.anchor=_NE;
+      QRImage.$_qr.width=QRImage.$_qr.height=100;
+    )
+  }
+  .boxPick=true
+  .cursor=_HAND
+  .new={
+    Trigger.$_press.test={!doQR&$$.press};
+    Trigger.$_press.exec={Meson.showDocument(^applet="Applet.Primary",^target="_blank",^url=$$.url)};
+    Trigger.$_hover.test={!doQR&$$.hover};
+    Trigger.$_hover.exec={Meson.showStatus(^applet="Applet.Primary",^status=$$.url)};
+  }
+>>
+
+AppControlProductTitle.extends=""
+AppControlProductTitle.Class<<
+  .script=""
+  .new={
+    Image.ProductTitle.rebuild=true;
+    currentProductTitle==""?(
+      currentProductTitle={l10n("$")->text};
+      currentBeautyShot={$$.script};
+    ):(
+      currentProductSubTitle={l10n("$")->text};
+    );
+  }
+>>
+AppControlSection.extends=""
+AppControlSection.Class<<
+  .script=""
+  .newControl={
+    SectionButton.$.label={l10n("$")->section};
+    SectionButton.$.sectionText={l10n("$")->text};
+    $$.script!=""?(
+      SectionScript.SScr_$.section="$";
+      SectionScript.SScr_$.script={$$.script};
+    );
+    l10n("$")->imageFile!=""?(
+      SectionGraphic.SGrp_$.section="$";
+      SectionGraphic.SGrp_$.file={l10n("$")->imageFile};
+      SectionGraphic.SGrp_$.anchor={l10n("$")->imagePlacement=="top"?_S:_N};
+    );
+  }
+  .new={
+    pendingControls[pendingControlsCounter]="$$";
+    pendingControlsCounter=pendingControlsCounter+1;
+  }
+>>
+AppControlSidecar.extends="ActionLabel"
+AppControlSidecar.Class<<
+  .anchor={isPortrait?_SE:_NE}
+  .x={insetRight-20}
+  .y={isPortrait?(insetBottom-100):(insetTop+100)}
+  .script=""
+  .buffer=white
+  .textValue={"%Sidecar{%SidecarTitle{"~l10n("$")->titleText~"}\n\n"~l10n("$")->text~"}"}
+  .isInit={$$.script==Scene.3d.runtime->getInitID()}
+  .pleaseShow={$$.isInit}
+  .scriptRT={@("Scene.3d.script_"~$$.script)}
+  .alpha=0
+  .layer=97
+  .wrapWidth=450
+  .enabled=true // not sure why this was not enabled, but enabling it is required for links to work
+  .new={
+    ActionLabelText.$_text.tabStops={[50*fontScale,80*fontScale,110*fontScale]};
+    ActionLabelText.$_text.wrapWidth={$$.wrapWidth*fontScale};
+    ActionLabelText.$_text.noOrphan=true;
+    ActionLabelText.$_text.enabled=true; // to allow links to work
+    Anim.$_inout.attr="$$.alpha";
+    Anim.$_inout.rate=1;
+    Anim.$_inout.goal={$$.pleaseShow&!screenSaverActive&(autoRunMode|sidecarsDuring|allPlayingScripts==[])?1:-1};
+    ImageBorder.$.color="ccc";
+    Image.$_close.parent="$$";
+    Image.$_close.anchor=_SE;
+    Image.$_close.x={$$.width+9};
+    Image.$_close.y=-13;
+    Image.$_close.layer=11;
+    Image.$_close.dataSource=Image.Tools.dataSource;
+    Image.$_close.file="img/sidecarClose.png";
+    Image.$_close.cursor=HAND;
+    Image.$_close.absEnabled=true;
+    Image.$_frame.layer={$$.layer-1};
+    Image.$_frame.x={$$.absX-8};
+    Image.$_frame.y={$$.absY-8};
+    Image.$_frame.width={$$.width+16};
+    Image.$_frame.height={$$.height+16};
+    Image.$_frame.enabled=false;
+    Image.$_frame.buffer="efefef";
+    Image.$_frame.alpha={$$.alpha};
+    ImageBorder.$_frame.color="ccc";
+    Area.$_close.image="Image.$_close";
+    Area.$_close.boxPick=true;
+    Trigger.$_show.test={$$.scriptRT!=""&$$.scriptRT->playing};
+    Trigger.$_show.exec={$$.pleaseShow=true;$$.layer=98};
+    Trigger.$_hide.test={Area.$_close.press|!fullMode|(allPlayingScripts!=[]&(!$$.scriptRT->playing))};
+    Trigger.$_hide.exec={$$.pleaseShow=false;$$.layer=97;Area.$_close.press?($$.alpha=0)};
+    ChangeTrigger.$_on_reset.last=ResetSerial;
+    ChangeTrigger.$_on_reset.test={ResetSerial};
+    ChangeTrigger.$_on_reset.exec={!$$.isInit?(Trigger.$_hide.exec();$$.alpha=0)};
+  }
+>>
+AppControlHeading.extends=""
+AppControlHeading.Class<<
+  .inst="$"
+  .subGroup=""
+  .newControl={
+    processedControls[processedControlsCounter]="$$";
+    processedControlsCounter=processedControlsCounter+1;
+    HeadingButton.$.x;
+  }
+  .new={
+    pendingControls[pendingControlsCounter]="$$";
+    pendingControlsCounter=pendingControlsCounter+1;
+  }
+>>
+AppControl.extends=""
+AppControl.Class<<
+  .inst="$"
+  .subGroup=""
+  .script=""
+  .actionType="anim"
+  .jumpToTime=-1
+  .onClick=""
+  .newControl={
+    processedControls[processedControlsCounter]="$$";
+    processedControlsCounter=processedControlsCounter+1;
+    ScriptButton.$.actionType=$$.actionType;
+    ScriptButton.$.jumpToTime=$$.jumpToTime;
+    ScriptButton.$.script=$$.script;
+    ScriptButton.$.subGroup=$$.subGroup;
+    ScriptButton.$.onClick={$$.onClick()};
+    randomScripts=randomScripts++["ScriptButton.$"];
+  }
+  .addAction={
+    ScriptButton.$.subMembers=ScriptButton.$.subMembers++[#arg];
+  }
+  .new={
+    pendingControls[pendingControlsCounter]="$$";
+    pendingControlsCounter=pendingControlsCounter+1;
+  }
+>>
+AppHotSpot.extends=""
+AppHotSpot.Class<<
+  .inst="$"
+  .script=""
+  .actionType="anim"
+  .jumpToTime=-1
+  .alwaysVisible=false
+  .location=["","",0,0,0,0]
+  .mouseOver=true
+  .force=""
+  .trackingURL=""
+  .onClick=""
+  .color="ff0"
+  .wrapWidth=""
+  .newHotSpot={
+    HotSpotButton.$.actionType=$$.actionType;
+    HotSpotButton.$.jumpToTime=$$.jumpToTime;
+    HotSpotButton.$.script=$$.script;
+    HotSpotButton.$.alwaysVisible=$$.alwaysVisible;
+    HotSpotButton.$.location=$$.location;
+    HotSpotButton.$.trackingURL=$$.trackingURL;
+    HotSpotButton.$.onClick={$$.onClick()};
+    HotSpotButton.$.mouseOver=$$.mouseOver;
+    HotSpotButton.$.force=$$.force;
+    HotImage.$.wrapWidth=$$.wrapWidth;
+    HotImage.$.lineColor={colorTheme};
+    HotImage.$.forceShow={HotSpotButton.$.isForced};
+    $$.mouseOver?(Image.HSIndicator.layer={!autoRunMode&fullMode&allPlayingScripts==[]?1:-1});
+  }
+  .new={
+    hasHotSpots=true;
+    pendingHotSpots=pendingHotSpots ++ ["$$"];
+  }
+>>
+AppControlConfig.extends="AppControl"
+AppControlConfig.Class<<
+  .config=""
+  .newControl=AppControl.Class.newControl+{
+    ScriptButton.$.style={SceneState.3d.Configuration==$$.config?"Config":"Script"};
+  }
+>>
+AppControl360.extends="AppControl"
+AppControl360.Class<<
+  .rate=30
+  .newControl={
+    360Button.$.rate={$$.rate};
+  }+AppControl.Class.newControl
+  .new={
+    pendingControls[pendingControlsCounter]="$$";
+    pendingControlsCounter=pendingControlsCounter+1;
+  }
+>>
+pendingHotSpots=[]
+pendingControls=[]
+pendingControlsCounter=0
+processedControls=[]
+processedControlsCounter=0
+processPendingControls={
+  foreach(^elem="c"; ^in=pendingControls; ^do={
+    #c->subGroup=="" ? #c->newControl() : (#mainC=@("sub_"~#c->subGroup))=="" ? (("sub_"~(#c->subGroup))=#c; #c->newControl()) : #mainC->addAction(#c);
+  });
+  foreach(^elem="c"; ^in=pendingHotSpots; ^do={
+    #c->newHotSpot();
+  });
+}
+
+uiDone={modelVersion=Meson.currentDataTimestamp;processPendingControls()}
+
+AppControlCustomHSIndicator.extends=""
+AppControlCustomHSIndicator.Class<<
+  .anchorX=0
+  .anchorY=0
+  .margin=17
+  .new={
+    FilteredImage.HSIndicator.effectPipeline=[filterNoEffect];
+    FilteredImage.HSIndicator.anchorX={$$.anchorX};
+    FilteredImage.HSIndicator.anchorY={$$.anchorY};
+    FilteredImage.HSIndicator.margin={$$.margin};
+    FilteredImage.HSIndicator.dataSource="Data.ModelUI";
+    FilteredImage.HSIndicator.file={l10n("$")->imageFile};
+    HSMargin=0;
+  }
+>>
+
+AppControlBadge.extends="Image"
+AppControlBadge.Class<<
+  .layer={screenSaverActive?-1:0}
+  .anchor=_S
+  .x={Scene.3d.x+Scene.3d.centerX}
+  .y={insetBottom}
+  .file={l10n("$")->imageFile};
+>>
+
+AppControlSplash.extends="AppControlSidecar"
+AppControlSplash.Class<<
+  .scriptRT=""
+  .isInit=true
+  .new={
+    Trigger.$_show.test=true;
+  }
+>>
+
+Meson.addContextMenu(^applet=theApplet,^label="Inches")
+Meson.addContextMenu(^applet=theApplet,^label="Centimeters")
+Trigger.GoInch.test={theApplet->menuItem=="Inches"}
+Trigger.GoInch.exec={unitsMul={Scene.3d.inch};unitsLabel={" "~l10n("in")}}
+Trigger.GoCM.test={theApplet->menuItem=="Centimeters"}
+Trigger.GoCM.exec={unitsMul={Scene.3d.cm};unitsLabel={" "~l10n("cm")}}
+
+Meson.addContextMenu(^applet=theApplet,^label="-")
+
+Trigger.GoEn.test={theApplet->menuItem==I18N.en.lang}; Trigger.GoEn.exec={language="en"}
+Trigger.GoRu.test={theApplet->menuItem==I18N.ru.lang}; Trigger.GoRu.exec={language="ru"}
+Trigger.GoEs.test={theApplet->menuItem==I18N.es.lang}; Trigger.GoEs.exec={language="es"}
+Trigger.GoEl.test={theApplet->menuItem==I18N.el.lang}; Trigger.GoEl.exec={language="el"}
+Trigger.GoFi.test={theApplet->menuItem==I18N.fi.lang}; Trigger.GoFi.exec={language="fi"}
+Trigger.GoFr.test={theApplet->menuItem==I18N.fr.lang}; Trigger.GoFr.exec={language="fr"}
+Trigger.GoDe.test={theApplet->menuItem==I18N.de.lang}; Trigger.GoDe.exec={language="de"}
+Trigger.GoZh.test={theApplet->menuItem==I18N.zh.lang}; Trigger.GoZh.exec={language="zh"}
+Trigger.GoJa.test={theApplet->menuItem==I18N.ja.lang}; Trigger.GoJa.exec={language="ja"}
+Trigger.GoCs.test={theApplet->menuItem==I18N.cs.lang}; Trigger.GoCs.exec={language="cs"}
+Trigger.GoDa.test={theApplet->menuItem==I18N.da.lang}; Trigger.GoDa.exec={language="da"}
+Trigger.GoNl.test={theApplet->menuItem==I18N.nl.lang}; Trigger.GoNl.exec={language="nl"}
+Trigger.GoIt.test={theApplet->menuItem==I18N.it.lang}; Trigger.GoIt.exec={language="it"}
+Trigger.GoNo.test={theApplet->menuItem==I18N.no.lang}; Trigger.GoNo.exec={language="no"}
+Trigger.GoPl.test={theApplet->menuItem==I18N.pl.lang}; Trigger.GoPl.exec={language="pl"}
+Trigger.GoPt.test={theApplet->menuItem==I18N.pt.lang}; Trigger.GoPt.exec={language="pt"}
+Trigger.GoSv.test={theApplet->menuItem==I18N.sv.lang}; Trigger.GoSv.exec={language="sv"}
+Trigger.GoKo.test={theApplet->menuItem==I18N.ko.lang}; Trigger.GoKo.exec={language="ko"}
+
+l10n={@("I18N."~language~.~#arg)}
+inEnglish={@("I18N.Class."~#arg)}
+
+uiDone={processPendingControls();!startWith3D?(Image.Loading.layer=-1);}
+
+Scene.3d.dataSource="Data.Model"
+Data.ModelUI.url="model/odel_ui.jar"
+Data.Model.stall={Data.ModelUI.state!=_CLOSED}
+Data.Model.scene="Scene.3d"
+Data.Model.url="model/model.jar"
+
+I18N.Class<<
+  .lang="English"
+  .toolFontSize=11
+  .Move="Move"
+  .Turn="Turn"
+  .Measure="Measure"
+  .Zoom="Zoom"
+  .Reset="Reset"
+  .PauseTool="Pause"
+  .in="inches"
+  .cm="centimeters"
+  .approx="Approximately "
+  .3dHintTouch="Touch the product to interact"
+  .3dHintMouse="Click the product to interact"
+  .dragTouch="Brush your finger across the product to measure"
+  .dragMouse="Click and drag your mouse\nacross the product to measure"
+  .style="Normal"
+  .Next="Next"
+  .Back="Back"
+  .Page="Page"
+  .Auto="Auto"
+  .Notes="Reveal Sales Notes"
+  .NoNotes="Hide Sales Notes"
+  .Tour="View 360%Sans{\u00B0}\nAnimation"
+  .Features="Product Animations"
+  .IPadHome="HOME"
+  .IPadSections="DETAILS"
+  .IPad360="TOUR"
+  .IPadNotes="NOTES"
+  .IPadReset="RESET"
+>>
+
+I18N.ru<<
+  .lang="Русский"
+  .Move="Двинь"
+  .Turn="Вращай"
+  .Measure="Меряй"
+  .Zoom="Увеличь"
+  .Reset="Сбрось"
+  .in="Дюймов"
+  .cm="Сантиметров"
+  .dragTouch="Нажми и потяни для измерения"
+  .dragMouse="Нажми и потяни для измерения"
+  .Features="ВОЗМОЖНОСТИ"
+  .style="Tiny"
+  .Next="Следующая Стр."
+  .Back="Предидыщая Стр."
+>>
+
+I18N.es<<
+  .lang="Español"
+  .Move="Mover"
+  .Turn="Rotar"
+  .Measure="Medir"
+  .Zoom="Tamaño"
+  .Reset="Restablecer"
+  .in="pulgadas"
+  .cm="centímetros"
+  .dragTouch="Arrastrar para medir"
+  .dragMouse="Arrastrar para medir"
+  .Features="CARACTERÍSTICAS"
+  .style="Tiny"
+  .approx="Aproximadamente"
+  .Next="Siguiente"
+  .Back="Anterior"
+>>
+
+I18N.fr<<
+  .lang="Français"
+  .Move="Déplacer"
+  .Turn="Rotation"
+  .Measure="Mesure"
+  .Zoom="Taille"
+  .Reset="Rétablir"
+  .in="pouces"
+  .cm="centimètres"
+  .dragTouch="Glisser pour mesurer"
+  .dragMouse="Glisser pour mesurer"
+  .Features="CARACTÉRISTIQUES"
+  .style="Tiny"
+  .approx="Approximativement"
+  .Next="Suivant"
+  .Back="Retour"
+>>
+
+I18N.de<<
+  .lang="Deutsch"
+  .Move="Schwenken"
+  .Turn="Rotieren"
+  .Measure="Messen"
+  .Zoom="Skalieren"
+  .Reset="Rückstellen"
+  .in="Zoll"
+  .cm="Zentimeter"
+  .dragTouch="Zum Messen ziehen"
+  .dragMouse="Zum Messen ziehen"
+  .style="Tiny"
+  .approx="Ungefähr"
+  .Features="EIGENSCHAFTEN"
+  .Next="Weiter"
+  .Back="Zurück"
+>>
+
+I18N.ja<<
+  .lang="日本語"
+  .Move="移動"
+  .Turn="回転"
+  .Measure="寸法表示"
+  .Zoom="ズーム"
+  .Reset="リセット"
+  .in="インチ"
+  .cm="センチメートル"
+  .style="Large"
+  .3dHintTouch="製品をタッチして操作"
+  .3dHintMouse="製品をクリックして回転してみて下さい"
+  .dragTouch="製品全体で指でなぞって測定"
+  .dragMouse="マウスのクリック&\nドラッグで製品の寸法を図ってみよう"
+  .Next="次へ"
+  .Back="戻る"
+  .Page="ページ"
+  .Auto="自動"
+  .Notes="製品の特徴を表示"
+  .NoNotes="販売契約書を非表示"
+  .Tour="360%Sans{\u00B0}\nアニメーションを表示"
+  .Features="製品アニメーション"
+  .IPadHome="開始"
+  .IPadSections="詳細"
+  .IPad360="旅行"
+  .IPadNotes="注釈"
+  .IPadReset="リセット"
+  .approx="約"
+>>
+
+I18N.zh<<
+  .lang="中文"
+  .Move="摇摆"
+  .Turn="旋转"
+  .Measure="测量"
+  .Zoom="显示比例"
+  .Reset="重设"
+  .in="英寸"
+  .cm="厘米"
+  .dragTouch="阻力对措施"
+  .dragMouse="阻力对措施"
+  .style="Large"
+  .Features="特点"
+>>
+
+I18N.cs<<
+  .lang="Česky"
+  .Move="Přesunout"
+  .Turn="Otočit"
+  .Measure="Změřit"
+  .Zoom="Zvětšit"
+  .Reset="Obnovit\n(Reset)"
+  .in="palců"
+  .cm="centimetrů"
+  .dragTouch="Táhnout a změřit"
+  .dragMouse="Táhnout a změřit"
+  .style="Tiny"
+>>
+
+I18N.da<<
+  .lang="Dansk"
+  .Move="Flyt"
+  .Turn="Drej"
+  .Measure="Mål"
+  .Zoom="Zoom"
+  .Reset="Nulstil"
+  .in="tommer"
+  .cm="centimeter"
+  .dragTouch="Træk for at måle"
+  .dragMouse="Træk for at måle"
+  .style="Normal"
+  .approx="ca."
+  .Features="EGENSKABER"
+>>
+
+I18N.nl<<
+  .lang="Nederlands"
+  .Move="Verplaatsen"
+  .Turn="Draaien"
+  .Measure="Meten"
+  .Zoom="Zoomen"
+  .Reset="%TwoLine{Opnieuw\ninstellen}"
+  .in="inches"
+  .cm="centimeter"
+  .dragTouch="Object meten"
+  .dragMouse="Object meten"
+  .style="Tiny"
+  .approx="ongeveer"
+  .Features="EIGENSCHAPPEN" 
+>>
+
+I18N.it<<
+  .lang="Italiano"
+  .Move="Sposta"
+  .Turn="Gira"
+  .Measure="Misura"
+  .Zoom="Zoom"
+  .Reset="Ripristina"
+  .in="pollici"
+  .cm="centimetri"
+  .dragTouch="Trascina per misurare"
+  .dragMouse="Trascina per misurare"
+  .style="Normal"
+  .approx="Approssimativamente"
+  .Features="CARATTERISTICHE"
+>>
+
+I18N.no<<
+  .lang="Norsk"
+  .Move="Flytte"
+  .Turn="Dreie"
+  .Measure="Måle"
+  .Zoom="Zoom"
+  .Reset="Nullstille"
+  .in="tommer"
+  .cm="centimeter"
+  .dragTouch="Dra for å måle"
+  .dragMouse="Dra for å måle"
+  .style="Normal"
+  .approx="Ca."
+  .Features="FUNKSJONER"
+>>
+
+I18N.pl<<
+  .lang="Polski"
+  .Move="Przesunięcie"
+  .Turn="Obrót"
+  .Measure="Pomiar"
+  .Zoom="Zbliżenie"
+  .Reset="Reset"
+  .in="cale"
+  .cm="centymetry"
+  .dragTouch="Przeciągnięcie w celu pomiaru obiektu"
+  .dragMouse="Przeciągnięcie w celu pomiaru obiektu"
+  .style="Tiny"
+  .approx="Około"
+  .Features="CECHY"
+>>
+
+I18N.pt<<
+  .lang="Português"
+  .Move="Mover"
+  .Turn="Rodar"
+  .Measure="Medir"
+  .Zoom="Zoom"
+  .Reset="Reset"
+  .in="polegadas"
+  .cm="centímetros"
+  .approx="Aproximadamente"
+  .dragTouch="Arraste para medir"
+  .dragMouse="Arraste para medir"
+  .Features="CARACTERÍSTICAS"
+  .style="Tiny"
+>>
+
+I18N.sv<<
+  .lang="Svenska"
+  .Move="Flytta"
+  .Turn="Vänd"
+  .Measure="Mät"
+  .Zoom="Zoom"
+  .Reset="Återställ"
+  .in="Tum"
+  .cm="centimeter"
+  .dragTouch="Dra för att mäta"
+  .dragMouse="Dra för att mäta"
+  .style="Normal"
+  .approx="Ungefär"
+  .Features="EGENSKAPER"
+>>
+
+I18N.ko<<
+  .lang="한국어"
+  .Move="이동"
+  .Turn="전환"
+  .Zoom="확대/축소"
+  .Reset="재설정"
+  .in="인치"
+  .cm="센티미터"
+  .dragTouch="마우스 드래그를 측정"
+  .dragMouse="마우스 드래그를 측정"
+  .style="Large"
+>>
+
+I18N.el<<
+  .lang="Ελληνικά"
+  .style="Normal"
+  .Move="κίνηση"
+  .Turn="περιστροφή"
+  .Measure="μέτρηση"
+  .Zoom="εστίαση"
+  .Reset="σβήσιμο"
+  .in="ίντσες"
+  .cm="εκατοστά"
+  .approx="κατά προσέγγιση"
+  .dragTouch="σύρετε για μέτρηση"
+  .dragMouse="σύρετε για μέτρηση"
+  .Features="ΧΑΡΑΚΤΗΡΙΣΤΙΚΑ"
+>>
+
+I18N.fi<<
+  .lang="Suomi"
+  .style="Normal"
+  .Move="Siirrä"
+  .Turn="Käännä"
+  .Measure="Mittaustyökalu"
+  .Zoom="Lähennä"
+  .Reset="Resetoi"
+  .in="tuumat"
+  .cm="senttimetrit"
+  .approx="noin"
+  .dragTouch="Vedä mitataksesi"
+  .dragMouse="Vedä mitataksesi"
+  .Features="OMINAISUUDET"
+>>
+
+flagCount=0
+showFlagMenu=false
+showFlagMenuArmed=false
+Image.FlagMenu<<
+  .x={insetRight-47*Image.FlagMenu.scaleX}
+  .y={insetTop+100}
+  .scaleX=0
+  .layer=9999
+>>
+Anim.FlyFlagMenu<<
+  .attr=["Image.FlagMenu.scaleX"]
+  .goal={showFlagMenu?[1]:[0]}
+  .rate=10
+>>
+Style.FlagLabel<<
+  .color=white
+  .dropShadow=black
+  .fontFamily=["SansSerif"]
+  .fontSize=16
+>>
+Flag.extends="Image"
+Flag.Class<<
+  .parent="Image.FlagMenu"
+  .place=0
+  .lang=""
+  .file={"img/flags/"~$$.lang~".png"}
+  .y={$$.place*32}
+  .new={
+    $$.place=flagCount;
+    flagCount=flagCount+1;
+    Image.$_lbl.parent="$$";
+    Image.$_lbl.text={"%FlagLabel{"~@("I18N."~$$.lang~.lang)~"}"};
+    Image.$_lbl.anchor=_E;
+    Image.$_lbl.y=14;
+    Area.$.image="$$";
+    Area.$.boxPick=true;
+    Trigger.$_press.test={Area.$.press};
+    Trigger.$_press.exec={language=$$.lang};
+  }
+>>
+Image.CurLang<<
+  .layer={screenSaverActive|noLanguages?-1:0}
+  .x={insetRight}
+  .y={insetBottom}
+  .anchor=_SE
+  .file={"img/flags"~language~".png"}
+  .wait=true
+  .alpha=0.5
+>>
+Area.CurLang.image="Image.CurLang"
+Area.CurLang.boxPick=true
+Trigger.CurLang_press.test={Area.CurLang.press}
+Trigger.CurLang_press.exec={showFlagMenuArmed=true}
+Trigger.CurLang_release.test={showFlagMenuArmed&!theDisplay->press}
+Trigger.CurLang_release.exec={showFlagMenu=true;showFlagMenuArmed=false}
+Trigger.DismissFlagMenu_press.test={showFlagMenu&theDisplay->press}
+Trigger.DismissFlagMenu_press.exec={showFlagMenu=false}
+
+!noLanguages?(
+  langList==""|langList==[""]?(langList=["cs", "da", "de", "en", "es", "fi", "fr", "el", "it", "ko", "nl", "no", "pl", "pt", "ru", "sv", "ja", "zh"]);
+  foreach(^elem="l",^in=langList,^do={
+    @("I18N."~#l~.showOnMenu)?Meson.addContextMenu(^applet="Applet.Primary",^label=@("I18N."~#l~.lang));
+    ("Flag.Flag_"~#l)->lang=#l;
+  });
+)
+
+Meson.addContextMenu(^applet=theApplet,^label="-")
+Meson.addContextMenu(^applet=theApplet,^label="End Show")
+Trigger.GoEndShow.test={theApplet->menuItem=="End Show"}; Trigger.GoEndShow.exec={Meson.exit(0)}
+
+language=Meson.language
+language=="en"?Trigger.GoInch.exec():Trigger.GoCM.exec()
+customizeUI()

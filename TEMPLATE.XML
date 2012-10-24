@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<template id="mercury" name="Mercury HD Template">
+  <render>
+    <meson polygon-budget='5000000' dir='meson' large-format='true' leptonX="">
+      <copy source="index.meson" dest-file="index.meson" filter="yes"/>
+      <!-- lepton only
+      <copy source="custom.txt" dest-jar="model_ui.jar" filter="yes"/>
+only lepton -->
+      <copy source="template.txt" dest-jar="ui.jar"/>
+
+      <copy source="animations.png" dest-jar="ui.jar"/>
+      <copy source="arrow2.png" dest-jar="ui.jar"/>
+      <copy source="arrow2a.png" dest-jar="ui.jar"/>
+      <copy source="arrow_left.png" dest-jar="ui.jar"/>
+      <copy source="arrow_right.png" dest-jar="ui.jar"/>
+      <copy source="close_btn.png" dest-jar="ui.jar"/>
+      <copy source="control_shadow.png" dest-jar="ui.jar"/>
+      <copy source="cpanel.png" dest-jar="ui.jar"/>
+      <copy source="cs.png" dest-jar="ui.jar"/>
+      <copy source="da.png" dest-jar="ui.jar"/>
+      <copy source="de.png" dest-jar="ui.jar"/>
+      <copy source="el.png" dest-jar="ui.jar"/>
+      <copy source="en.png" dest-jar="ui.jar"/>
+      <copy source="es.png" dest-jar="ui.jar"/>
+      <copy source="fi.png" dest-jar="ui.jar"/>
+      <copy source="flyout.png" dest-jar="ui.jar"/>
+      <copy source="fr.png" dest-jar="ui.jar"/>
+      <copy source="home.png" dest-jar="ui.jar"/>
+      <copy source="hot.png" dest-jar="ui.jar"/>
+      <copy source="ipadMenu.png" dest-jar="ui.jar"/>
+      <copy source="it.png" dest-jar="ui.jar"/>
+      <copy source="ja.png" dest-jar="ui.jar"/>
+      <copy source="ko.png" dest-jar="ui.jar"/>
+      <copy source="logoColor.gif" dest-jar="ui.jar"/>
+      <copy source="logoMask.gif" dest-jar="ui.jar"/>
+      <copy source="measure.gif" dest-jar="ui.jar"/>
+      <copy source="nl.png" dest-jar="ui.jar"/>
+      <copy source="no.png" dest-jar="ui.jar"/>
+      <copy source="pl.png" dest-jar="ui.jar"/>
+      <copy source="pt.png" dest-jar="ui.jar"/>
+      <copy source="ru.png" dest-jar="ui.jar"/>
+      <copy source="sectionBg.png" dest-jar="ui.jar"/>
+      <copy source="sidecarClose.png" dest-jar="ui.jar"/>
+      <copy source="sv.png" dest-jar="ui.jar"/>
+      <copy source="z1.png" dest-jar="ui.jar"/>
+      <copy source="z2.png" dest-jar="ui.jar"/>
+      <copy source="z3.png" dest-jar="ui.jar"/>
+      <copy source="z4.png" dest-jar="ui.jar"/>
+      <copy source="z5.png" dest-jar="ui.jar"/>
+      <copy source="zh.png" dest-jar="ui.jar"/>
+
+    </meson>
+
+    <thumbnail width="114"  height="66"  dest-file="thumb.jpg"/>
+    <thumbnail width="200"  height="160"  dest-file="thumb_200x160.png"/>
+
+  </render>
+
+  <ui default-control-class="AppControl" default-hotspot-class="AppHotSpot" >
+    <width-expr>1366</width-expr>
+    <height-expr>768</height-expr>
+    <meson-code>
+      <![CDATA[
+        Template.misc.width=1366;
+        Template.misc.height=768;
+        Template.misc.scaleMultiplier={Scene.3d.width / Template.misc.width};
+        Scene.3d.centerX={Template.misc.scaleMultiplier * (Template.misc.width )/ 2};
+        Scene.3d.centerY={Template.misc.scaleMultiplier * (Template.misc.height - 50) / 2};
+        GhostHintImage.ToolsGhost<<
+          .label="Toolbar";
+          .anchor=_S;
+          .x={Scene.3d.width/2};
+          .y={Scene.3d.height - 1};
+          .width={Template.misc.scaleMultiplier * 273 - 2};
+          .height={Template.misc.scaleMultiplier * 50 - 2};
+        >>
+        popInBackground={HSPopupProperties.controlClass=="AppControlBackground"}
+        Image.HSPopup.parent={popInBackground?"Image.Letterbox":"Scene.3d"}
+        layerExpr={}+Image.HSPopup.layer
+        Image.HSPopup.layer={#l=layerExpr;popInBackground?(#l/20):#l}
+Style.Sup<<
+  .offsetY=-0.5
+>>
+Style.Sub<<
+  .offsetY=0.5
+>>
+Style.Bullet<<
+  .marginLeft=10
+  .contentPre="%BulletMark{\u2022}\t"
+>>
+Style.BulletMark<<
+  .lineSpacing=10
+  .marginLeft=0
+  .color=black
+  .fontWeight=_BOLD
+  .fontSmooth=2
+>>
+Style.Bullet2<<
+  .marginLeft=20
+  .contentPre="%Bullet2Mark{\u2022}\t"
+>>
+Style.Bullet2Mark<<
+  .lineSpacing=10
+  .marginLeft=10
+  .color="444"
+  .fontWeight=_BOLD
+  .fontSmooth=2
+>>
+      ]]>
+    </meson-code>
+
+    <languages default-desc="English">
+      <language id="cs" default-desc="Czech" desc="Česky" />
+      <language id="zh" default-desc="Chinese (Simplified)" desc="繁體中文" />
+      <language id="da" default-desc="Danish" desc="Dansk" />
+      <language id="nl" default-desc="Dutch" desc="Nederlands" />
+      <language id="fi" default-desc="Finnish" desc="Suomi" />
+      <language id="fr" default-desc="French" desc="Français" />
+      <language id="de" default-desc="German" desc="Deutsch" />
+      <language id="el" default-desc="Greek" desc="Ελληνικά" />
+      <language id="it" default-desc="Italian" desc="Italiano" />
+      <language id="ja" default-desc="Japanese" desc="日本語" />
+      <language id="no" default-desc="Norweigan" desc="Norsk" />
+      <language id="pl" default-desc="Polish" desc="Polski" />
+      <language id="ru" default-desc="Russian" desc="Русский"/>
+      <language id="pt" default-desc="Portuguese" desc="Português" />
+      <language id="es" default-desc="Spanish" desc="Español" />
+      <language id="sv" default-desc="Swedish" desc="Svenska" />
+      <!-- <language id="ua" default-desc="Ukrainian" desc="Український"/> -->
+    </languages>
+    
+    <ui-field name="FLOOR_REFLECTION" label="Floor Reflection" type="choice" default="[0,0.3]">
+      <choice value="[]" label="None"/>
+      <choice value="[0,0.3]" label="Standard"/>
+      <choice value="[0,1]" label="Deep"/>
+    </ui-field>
+    <ui-field name="FLOOR_TEXTURE" label="Floor Texture" type="choice" default="false">
+      <choice value="true" label="On"/>
+      <choice value="false" label="Off"/>
+    </ui-field>
+    <ui-field name="FLOOR_TEXTURE_INTENSITY" label="Floor Texture Intensity" type="choice" default="0.2">
+      <choice value="0.5" label="Intense"/>
+      <choice value="0.2" label="Normal"/>
+      <choice value="0.05" label="Subtle"/>
+    </ui-field>
+    <ui-field name="SELF_SHADOWS" label="Self-Shadows" type="choice" default="true">
+      <choice value="true" label="On"/>
+      <choice value="false" label="Off"/>
+    </ui-field>
+    <ui-field name="BACKGROUND_GLOW" label="Background Glow" type="text" default="[]" post-label="[A,R,G,B,X,Y,R,R]"/>
+    <ui-field name="BACKGROUND_COLOR" label="Background Color" type="text" default="fff" post-label="hex RGB or RRGGBB"/>
+
+    <ui-field name="COLOR_THEME" label="Color Theme" type="text" default="99a" post-label="hex RGB or RRGGBB"/>
+
+    <ui-field name="PAN_LOCK" label="Pan Lock Condition:" type="text" default="false"/>
+    <ui-field name="PAN_LOCK_PAUSED" label="Pan Lock when Paused:" type="text" default="false"/>
+
+    <ui-field name="PAUSE_TOOL" label="Show Pause Tool" type="choice" default="false">
+      <choice value="false"/>
+      <choice value="true"/>
+    </ui-field>
+
+    <ui-field name="SIDECARS_DURING" label="Show Sidecars During Animations" type="choice" default="false">
+      <choice value="false"/>
+      <choice value="true"/>
+    </ui-field>
+
+    <ui-field name="START_WITH_3D" label="At Startup Show" type="choice" default="true">
+      <choice value="false" label="First Section"/>
+      <choice value="true" label="3D Model"/>
+    </ui-field>
+
+    <ui-field name="NO_LANGUAGES" label="Suppress Language Menu" type="choice" default="false">
+      <choice value="false"/>
+      <choice value="true"/>
+    </ui-field>
+
+    <ui-field name="CUSTOMIZE" label="Customize UI:" type="text"/>
+    <ui-field name="CUSTOMIZE_MODEL" label="Customize Model:" type="text"/>
+
+    <ui-field name="INCLUDE_MEASURE" label="Include Measure" type="choice" default="true">
+      <choice value="true"/>
+      <choice value="false"/>
+    </ui-field>
+
+    <control class='AppControlProductTitle' desc='Product Title' label='Product Title: $(DESC)'>
+      <meson-hints
+        fontFamily="SansSerif"
+        textAlign="_LEFT"
+        textBgColor="FFFF"
+        fontSize="18"
+        textColor="F000"/>
+    </control>
+
+    <control class='AppControl' desc='Normal'>
+      <graphic-field name="tipText" label="Tooltip" type="text" translated="true"/>
+      <field name="subGroup" label="Control Group:" type="text"/>
+      <field name="trackingURL" label="Tracking URL:" type="text"/>
+      <field name="onClick" label="On Click:" type="meson"/>
+      <meson-hints
+        fontFamily="SansSerif"
+        textAlign="_CENTER"
+        textBgColor="FFFF"
+        fontSize="14"
+        textColor="F000"/>
+    </control>
+    <control class='AppControlSection' desc='Section' label='$(I18N.section)' image-support="true">
+      <graphic-field name="section" label="Section" type="text" translated="true"/>
+      <meson-hints
+        fontFamily="SansSerif"
+        textAlign="_LEFT"
+        textBgColor="FFFF"
+        fontSize="12"
+        wrapWidth="380"
+        lineSpacing="2"
+        tabStops="{[15,30,45,300]}"
+        textColor="F444"/>
+    </control>
+    <control class='AppControlConfig' desc='Configuration'>
+      <graphic-field name="tipText" label="Tooltip" type="text" translated="true"/>
+      <field name="subGroup" label="Control Group:" type="text"/>
+      <field name="config" label="Configuration:" type="text"/>
+      <field name="trackingURL" label="Tracking URL:" type="text"/>
+      <field name="onClick" label="On Click:" type="meson"/>
+      <meson-hints
+        fontFamily="SansSerif"
+        textAlign="_CENTER"
+        textBgColor="FFFF"
+        fontSize="14"
+        textColor="F000"/>
+    </control>
+    <control class='AppControlHeading' desc='Heading'>
+      <meson-hints
+        fontFamily="SansSerif"
+        textAlign="_CENTER"
+        textBgColor="FFFF"
+        fontSize="14"
+        textColor="F000"/>
+    </control>
+    <control class='AppControlSidecar' desc='Side Car Text' image-support="true">
+      <graphic-field name="titleText" label="Title" type="text" translated="true"/>
+      <field name="wrapWidth" label="wrapWidth:" type="meson"/>
+      <meson-hints
+        fontFamily="SansSerif"
+        textAlign="_LEFT"
+        textBgColor="FFFF"
+        fontSize="9"
+        textColor="F000"
+        tabStops="{[10,30,50]}"/>
+    </control>
+    <control class='AppControlNotes' desc='Find Notes' image-support="false">
+      <field name="defaultState" label="Default State" type="choice" default="false">
+        <choice label="Icons Showing" value="true"/>
+        <choice label="Icons Hidden" value="false"/>
+      </field>
+    </control>
+    <control class='AppControl360' desc='360 Spin' image-support="false">
+      <graphic-field name="tipText" label="Tooltip" type="text" translated="true"/>
+      <field name="trackingURL" label="Tracking URL:" type="text"/>
+      <field name="onClick" label="On Click:" type="meson"/>
+      <field name="rate" label="Rate" type="choice" default="30">
+        <choice label="15 dps" value="15"/>
+        <choice label="30 dps" value="30"/>
+        <choice label="45 dps" value="45"/>
+        <choice label="60 dps" value="60"/>
+        <choice label="75 dps" value="75"/>
+        <choice label="90 dps" value="90"/>
+      </field>
+      <meson-hints
+        fontFamily="SansSerif"
+        textAlign="_CENTER"
+        textBgColor="FFFF"
+        fontSize="14"
+        textColor="F000"/>
+    </control>
+    <control class='AppControlSplash' desc='Splash Screen' image-support="true" label='Splash Screen: $(I18N.titleText)'>
+      <graphic-field name="titleText" label="Title" type="text" translated="true"/>
+      <field name="wrapWidth" label="wrapWidth:" type="meson"/>
+      <meson-hints
+        fontFamily="SansSerif"
+        textAlign="_LEFT"
+        textBgColor="FFFF"
+        fontSize="11"
+        tabStops="{[15,30,45]}"
+        textColor="F000"/>
+    </control>
+    <control class='AppControlCustomHSIndicator' desc='Custom Hotspot Indicator' image-support="true">
+      <field name="anchorX" label="anchorX" type="meson" default="0"/>
+      <field name="anchorY" label="anchorY" type="meson" default="0"/>
+      <field name="margin" label="margin" type="meson" default="17"/>
+    </control>
+    <control class='AppControlBadge' desc='Badge' image-support="true">
+    </control>
+    <hotspot class='AppHotSpot' desc='Floating Text' image-support="true">
+      <field name="color" label="Line Color" type="choice" default="ff0">
+        <choice label="Aqua" value="0ff"/>
+        <choice label="Black" value="000"/>
+        <choice label="Blue" value="00f"/>
+        <choice label="Fuchsia" value="f0f"/>
+        <choice label="Gray" value="888"/>
+        <choice label="Green" value="080"/>
+        <choice label="Lime" value="0f0"/>
+        <choice label="Maroon" value="800"/>
+        <choice label="Navy" value="008"/>
+        <choice label="Olive" value="880"/>
+        <choice label="Purple" value="808"/>
+        <choice label="Red" value="f00"/>
+        <choice label="Silver" value="ccc"/>
+        <choice label="Teal" value="088"/>
+        <choice label="White" value="fff"/>
+        <choice label="Yellow" value="ff0"/>
+        <choice label="Orange" value="E05213"/>
+      </field>
+      <field name="force" label="Force Show" type="scene_state"/>
+      <field name="mouseOver" label="Mouse Over" type="choice" default="true">
+        <choice label="Show" value="true"/>
+        <choice label="None" value="false"/>
+      </field>
+      <field name="condition" label="Condition:" type="text"/>
+      <field name="trackingURL" label="Tracking URL:" type="text"/>
+      <field name="onClick" label="On Click:" type="meson"/>
+      <field name="wrapWidth" label="wrapWidth:" type="meson"/>
+      <meson-hints
+        textBgColor="AFFF"
+        fontSize="11"
+        textColor="F444"/>
+    </hotspot>
+  </ui>
+
+  <automate>
+    <match-trigger id="*">
+      <create-trigger type="hotspot" class="AppHotSpot"/>
+      <create-action  type="anim" time-scale="1.0" backup-view="top" ignore-view="true" />
+    </match-trigger>
+  </automate>
+</template>
+

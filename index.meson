@@ -1,0 +1,28 @@
+Meson.emulateHD=true
+//Meson.forceScreen=[0,20,960,540]
+//Meson.forceScreen=[0,900,1920,1080]
+Meson.newApplet(["!Primary",1920,1080,0,0,"com.kaon.meson.gl.MesonGLApplet"])
+Meson.isMac=false
+
+Applet.Primary.fill="fff"
+Meson.gluon("com.kaon.meson.raster.RasterGluon")
+Meson.gluon("com.kaon.meson.scene.SceneGluon")
+Meson.gluon("com.kaon.meson.filter.FilterGluon")
+Meson.gluon("com.kaon.meson.string.StringGluon")
+(Meson.version>=9.8)?Meson.gluon("com.kaon.meson.qr.QRGluon")
+Style.Loading<<
+  .textAlign=_CENTER
+  .fontSize=32
+  .color=white
+  .dropShadow=black
+>>
+Image.Loading<<
+  .anchor=_C
+  .x={Display.Primary.width/2}
+  .y={Display.Primary.height/2}
+  .text="%Loading{Powered by Kaon\nwww.kaon.com\n \n \nLoading...}"
+>>
+floorReflection=[0,1]
+selfShadows=true
+colorTheme=red
+Data.Program.url="template.txt"
