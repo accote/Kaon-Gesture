@@ -1,3 +1,9 @@
+/*____________________________________________________________*/
+/*															  */		
+/*					Settings								  */
+/*____________________________________________________________*/
+
+
 theDisplay=(theDisplay==""?"Display.Primary":theDisplay)
 theApplet=(theApplet==""?"Applet.Primary":theApplet)
 
@@ -73,19 +79,26 @@ bloop1_Ep=1-bloopEp
 bloop1_Ep2=1-bloopEp2
 bloop={#b=(bloop1_Ep-#arg);#b=(1-#b*#b)/bloop1_Ep2;#b=#b*#b*#b;#b<0.01?0:#b}
 
-Image.CloseBtn<<
-  .file="img/close_btn.png"
-  .layer={Meson.secureUI|hasMainMenu|noTourExitButton?-1:99}
-  .x={insetRight}
-  .y={insetTop}
-  .anchor=_NE
->>
-Area.CloseBtn.image="Image.CloseBtn"
-Trigger.CloseBtn_press.test={Area.CloseBtn.press}
-Trigger.CloseBtn_press.exec={Meson.exit(0)}
+
+
 
 Trigger.AutoRunInSS.test=false /* Set in scene loaded trigger */
 Trigger.AutoRunInSS.exec={autoRunMode=true}
+
+
+
+
+
+
+
+
+/*____________________________________________________________*/
+/*															  */
+/*					Screen Saver							  */
+/*____________________________________________________________*/
+
+
+
 
 Timer.StartScreenSaver<<
   .delay=3*60*60
@@ -140,6 +153,17 @@ Trigger.CTAReset<<
 >>
 
 Meson.notebookPages=128
+
+
+
+
+
+/*____________________________________________________________*/
+/*															  */
+/*					Scripts									  */
+/*____________________________________________________________*/
+
+
 
 Trigger.SuppressHover.test={theDisplay->key!=""}
 Trigger.SuppressHover.exec={theDisplay->mouseX=theDisplay->mouseY=-1}
@@ -200,6 +224,11 @@ Image.PauseImage<<
 >>
 
 
+
+
+
+
+
 Image.TheCustomerLogo<<
   .layer={screenSaverActive==""?-1:0}
   .anchor=_NE
@@ -212,6 +241,14 @@ Image.TheCustomerLogo<<
 fullMode={attractMode|startWith3D}
 stashControlPanel=false
 
+
+
+/*____________________________________________________________*/
+/*															  */
+/*  				3d Scene								  */
+/*___________________________________________________________ */
+
+
 Scene.3d<<
   .x={insetLeft}
   .y={insetTop}
@@ -220,10 +257,7 @@ Scene.3d<<
   .centerY={(insetHeight-100)/(isPortrait?3:2)}
   .centerXGoal={(
     fullMode&!stashControlPanel&!sleepMode&!ipadMode?(
-/*
-      #l=fontScale*400;
-      #l+(insetWidth-#l)/2
-*/
+
       insetWidth/2
     ):fullMode?(
       insetWidth/2
@@ -272,6 +306,14 @@ Area.3DModel<<
 
 Trigger.Start3D.test={Area.3DModel.press}
 Trigger.Start3D.exec={start3DArmed=false;ClickOnReset();currentSection="";fullMode=true;Image.3DHint.alpha=5}
+
+
+
+/*____________________________________________________________*/
+/*															  */
+/*  				some hotspots, sidecar, styles			  */
+/*___________________________________________________________ */
+
 
 
 Style.Sans<<
@@ -354,6 +396,14 @@ Anim.3DHintAnim<<
 >>
 Trigger.Dismiss3DHint.test={Image.3DHint.alpha>1&(Area.3d.press|allPlayingScripts!=[])}
 Trigger.Dismiss3DHint.exec={Image.3DHint.alpha=1}
+
+
+/*____________________________________________________________*/
+/*															  */
+/*  				Home and Close							  */
+/*___________________________________________________________ */
+
+
 Image.MercuryGoBack<<
   .x={compactLayout?(insetRight-sectionButtonsWidth-250):39}
   .y={insetBottom-53}
@@ -367,6 +417,28 @@ Trigger.MercuryGoBack_press.test={Area.MercuryGoBack.press}
 Trigger.MercuryGoBack_press.exec={goBackOnRelease=true}
 Trigger.MercuryGoBack_release.test={goBackOnRelease&!theDisplay->press}
 Trigger.MercuryGoBack_release.exec={backToMainMenu()}
+
+
+
+Image.CloseBtn<<
+  .file="img/close_btn.png"
+  .layer={Meson.secureUI|hasMainMenu|noTourExitButton?-1:99}
+  .x={insetRight}
+  .y={insetTop}
+  .anchor=_NE
+>>
+Area.CloseBtn.image="Image.CloseBtn"
+Trigger.CloseBtn_press.test={Area.CloseBtn.press}
+Trigger.CloseBtn_press.exec={Meson.exit(0)}
+
+
+
+/*____________________________________________________________*/
+/*															  */
+/*  				IpadMenu								  */
+/*___________________________________________________________ */
+
+
 
 Style.IPadMenuButton<<
   _true.color={colorTheme}
@@ -440,6 +512,15 @@ IPadMenuButton.IPadReset<<
   .exec={ClickOnReset()}
   .show={fullMode}
 >>
+
+
+
+/*___________________________________________________________*/
+/*															 */
+/*  				Text Pages and nav						 */
+/*___________________________________________________________*/
+
+
 
 
 Style.SectionTitle<<
@@ -708,6 +789,14 @@ Image.TourButton<<
   }
   .init()
 >>
+
+
+
+/*___________________________________________________________*/
+/*															 */
+/*  				Animation menu							 */
+/*___________________________________________________________*/
+
 
 
 allScriptButtons=[]
@@ -1067,6 +1156,7 @@ bloopIO={#t<0?#t:#inout?elastic(^t=#t,^o=2):over_out(^t=#t,^s=2)}
 showAnimations=false
 tightScriptButtons=false
 
+
 Image.ControlPanel<<
   .anchor={ipadMode?_SE:_NW}
   .layer={!screenSaverActive&!initMode&fullMode&$$$.scaleY>0?1:-1}
@@ -1304,6 +1394,14 @@ HeadingButton.Class<<
   }
 >>
 
+
+/*___________________________________________________________*/
+/*															 */
+/*  				Hotspots								 */
+/*___________________________________________________________*/
+
+
+
 HotSpot.Class.enabled=true;
 
 lastHotSpot=""
@@ -1412,6 +1510,14 @@ Anim.HSIAlpha<<
   .goal={showNotes?1:0}
 >>
 
+
+
+/*___________________________________________________________*/
+/*															 */
+/*  				Controls like rotate and pan			 */
+/*___________________________________________________________*/
+
+
 thetaSnapAng={thetaSnap==1?180:360/thetaSnap}
 ChangeTrigger.ThetaSnap.test={(thetaSnap<1|theDisplay->press)?0:View.3d.desiredTheta}
 ChangeTrigger.ThetaSnap.exec={ChangeTrigger.ThetaSnap.test!=0?(
@@ -1427,6 +1533,7 @@ Trigger.PanLock.test={panLocked&(Scene.3d.mode!=_MOVE)}
 Trigger.PanLock.exec={Scene.3d.mode=_MOVE}
 Trigger.PanUnlock.test={!panLocked}
 Trigger.PanUnlock.exec={Scene.3d.mode=_ROTATE}
+
 
 FilterDilate.DilateColorFilter<<
   .color={colorTheme}
@@ -1521,6 +1628,13 @@ FilterEffect.ColorFilter<<
   .blur=0.25
 >>
 
+
+/*___________________________________________________________*/
+/*															 */
+/*  				züm										 */
+/*___________________________________________________________*/
+
+
 ZoomButton.extends="FilteredImage"
 ZoomButton.Class<<
   .parent="Image.Tools"
@@ -1571,6 +1685,12 @@ ClickOnZoom={Scene.3d.distance=0}
 ClickOnAuto={autoRunMode=!autoRunMode;!autoRunMode?ClickOnReset()}
 ClickOnNotes={showNotes=!showNotes}
 
+/*___________________________________________________________*/
+/*															 */
+/*  				measurement tool						 */
+/*___________________________________________________________*/
+
+
 Image.Measure0<<
   .file="img/measure.gif"
   .parent="Scene.3d"
@@ -1609,6 +1729,14 @@ Image.Distance<<
 
 currentProductTitle=""
 currentProductSubTitle=""
+
+
+
+/*___________________________________________________________*/
+/*															 */
+/*  				sidecar									 */
+/*___________________________________________________________*/
+
 
 Style.Sup<<
   .offsetYm=-0.55
@@ -1676,6 +1804,14 @@ Link.Class<<
     Trigger.$_hover.exec={Meson.showStatus(^applet="Applet.Primary",^status=$$.url)};
   }
 >>
+
+
+/*___________________________________________________________*/
+/*															 */
+/*  				Ipad stuff?								 */
+/*___________________________________________________________*/
+
+
 
 AppControlProductTitle.extends=""
 AppControlProductTitle.Class<<
@@ -1915,6 +2051,14 @@ Trigger.GoCM.exec={unitsMul={Scene.3d.cm};unitsLabel={" "~l10n("cm")}}
 
 Meson.addContextMenu(^applet=theApplet,^label="-")
 
+
+/*___________________________________________________________*/
+/*															 */
+/*  				Languages								 */
+/*___________________________________________________________*/
+
+
+
 Trigger.GoEn.test={theApplet->menuItem==I18N.en.lang}; Trigger.GoEn.exec={language="en"}
 Trigger.GoRu.test={theApplet->menuItem==I18N.ru.lang}; Trigger.GoRu.exec={language="ru"}
 Trigger.GoEs.test={theApplet->menuItem==I18N.es.lang}; Trigger.GoEs.exec={language="es"}
@@ -1939,11 +2083,24 @@ inEnglish={@("I18N.Class."~#arg)}
 
 uiDone={processPendingControls();!startWith3D?(Image.Loading.layer=-1);}
 
+
+/*___________________________________________________________*/
+/*															 */
+/*  				Load Model								 */
+/*___________________________________________________________*/
+
+
 Scene.3d.dataSource="Data.Model"
 Data.ModelUI.url="model/model_ui.jar"
 Data.Model.stall={Data.ModelUI.state!=_CLOSED}
 Data.Model.scene="Scene.3d"
 Data.Model.url="model/model.jar"
+
+
+/*____________________________________________________________*/
+/*															  */
+/*					Translations							  */
+/*____________________________________________________________*/
 
 I18N.Class<<
   .lang="English"
@@ -2337,3 +2494,4 @@ Trigger.GoEndShow.test={theApplet->menuItem=="End Show"}; Trigger.GoEndShow.exec
 language=Meson.language
 language=="en"?Trigger.GoInch.exec():Trigger.GoCM.exec()
 customizeUI()
+

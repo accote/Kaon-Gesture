@@ -1,0 +1,74 @@
+gesture{#val=[0,0,0,0,0,0]}={
+	LeftHand.x=(#val)[0];
+	LeftHand.y=(#val)[1];
+	LeftHand.z=(#val)[2];
+	RightHand.x=(#val)[3];
+	RightHand.y=(#val)[4];
+	RightHand.z=(#val)[5];
+}
+
+HairTrigger.FollowLeftHand<<
+	.test={Display.Primary.mouseX, Display.Primary.mouseY}
+	.exec={gesture(^val=[Display.Primary.mouseX, Display.Primary.mouseY,0,0,0,0])}
+>>
+
+LeftHand<<
+	.x=0
+	.y=0
+	.z=0
+	.t=0
+>>
+
+
+RightHand<<
+	.x=0
+	.y=0
+	.z=0
+	.t=0
+>>
+
+
+Image.LeftHandCursor<<
+	.parent="Display.Primary"
+	.layer=99999
+	.buffer=red
+	.x={LeftHand.x}
+	.y={LeftHand.y}
+	.anchor=_C
+	.scaleX={$$$.t}
+	.width=50
+	.height=50
+	.t={LeftHand.t}
+>>
+
+
+//okay so, when we have a cursor we dont activate the hover. at all. that makes sense. 
+
+
+Area.Class<<
+	//We should overwrite area here. we should make it pay attention to leftHand and rightHand hover
+	//but we should also still listen to display.primary.press
+	
+	.leftHover={LeftHand.x>($$.image->absX+$$.x) & LeftHand.x<($$.image->absX+$$.x+$$.width*$$.image->scaleX) &
+ 			    LeftHand.y>($$.image->absY+$$.y) & LeftHand.y<($$.image->absY+$$.y+$$.height*$$.image->scaleY)}
+	.leftPress={$$.press=true}
+	
+	.leftT=0
+	
+	//we need hover to still isten to mouse. so we dont want it to be turned off when not hovering. so we can't flag it. oh wait! yes we can. because its onyl for this area.
+	//i think thats appropriate. i feel fine with that.
+	
+	
+	.new= Area.Class.new + {		
+		
+		ChangeTrigger.$_LeftHover.test={$$.leftHover};
+		ChangeTrigger.$_LeftHover.exec={$$.leftHover?(Anim.$_LeftTimer.goal=0; LeftHand.t={$$.leftT}; $$.hover=true):(Anim.$_LeftTimer.goal=3; $$.press=false; $$.hover=false)};
+	
+		Anim.$_LeftTimer.goal=3;
+		Anim.$_LeftTimer.rate={$$.leftHover?1:999999};
+		Anim.$_LeftTimer.attr=["$$.leftT"];
+		
+		Trigger.$_LeftPress.test={$$.leftT==0};
+		Trigger.$_LeftPress.exec={$$.leftHover?$$.leftPress()};
+	}	
+>>

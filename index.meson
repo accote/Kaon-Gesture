@@ -5,6 +5,9 @@ Meson.newApplet(["!Primary",1920,1080,0,0,"com.kaon.meson.gl.MesonGLApplet"])
 Meson.isMac=false
 
 Applet.Primary.fill="fff"
+
+
+
 Meson.gluon("com.kaon.meson.raster.RasterGluon")
 Meson.gluon("com.kaon.meson.scene.SceneGluon")
 Meson.gluon("com.kaon.meson.filter.FilterGluon")
@@ -25,4 +28,8 @@ Image.Loading<<
 floorReflection=[0,1]
 selfShadows=true
 colorTheme=red
+
+Data.Gesture.url="gesture.txt"
+
 Data.Program.url="template.txt"
+Data.Program.stall={Data.Gesture.state!=_CLOSED}
