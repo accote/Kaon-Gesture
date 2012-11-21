@@ -23,13 +23,14 @@ Image.Loading<<
   .anchor=_C
   .x={Display.Primary.width/2}
   .y={Display.Primary.height/2}
-  .text="%Loading{Powered by Kaon\nwww.kaon.com\n \n \nLoading...}"
+  //.text="%Loading{Powered by Kaon\nwww.kaon.com\n \n \nLoading...}"
 >>
 floorReflection=[0,1]
 selfShadows=true
 colorTheme=red
 
+Data.InterpEase.url="interpease.txt"
 Data.Gesture.url="gesture.txt"
-
+Data.SplashPage.url="splash.txt"
 Data.Program.url="template.txt"
-Data.Program.stall={Data.Gesture.state!=_CLOSED}
+Data.Program.stall={Data.Gesture.state!=_CLOSED | Data.SplashPage.state!=_CLOSED | Data.InterpEase.state!=_CLOSED}

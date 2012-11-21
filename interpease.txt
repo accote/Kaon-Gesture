@@ -1,0 +1,345 @@
+// —————————————————————————————————————————————————————————————————————————————
+// Easing Library
+//
+// Contains a set of functions that take a linear time input, and return a
+// modified value. Used to create different animation curves from a single time
+// source.
+//
+// @package     Nucleus
+// @author      Casey Visco	<cvisco@kaon.com>
+// @version     1.0.0
+// @since       0.3.0
+//
+// —————————————————————————————————————————————————————————————————————————————
+// CHANGE LOG
+//                                                    
+// 2009-06-09 CV Added LINEAR and BIAS_FAST                                                         
+//                                                                            
+// —————————————————————————————————————————————————————————————————————————————
+
+
+
+// A 99% Useless function, since it does no easing at all, but sometimes useful 
+// as a "default" easing function for other methods or classes.
+// 
+// @param   t       Time Input (0 - 1)
+// @returns         Unmodified (t) value
+//
+Easing.LINEAR { #t = 0 } = {
+    #t;     
+}
+
+
+
+
+// A fast approximation of Ken Perlin's bias function. The zero and one end 
+// points are mapped to themselves. Other values are shifted upwards toward one
+// if (b) is greater than 0.5, and shifted downard toward zero if (b) is between
+// 0.0 and 0.5.
+//
+// @param   t       Time Input (0 - 1)
+// @param   b       Curve Bias (0 - 1)
+// @returns         Modified (t) value
+//
+Easing.BIAS_FAST { #t = 0, #b = 0.5 } = {
+    #t / ( (1 / #b - 2) * (1 - #t) + 1);     
+}
+
+
+
+
+// Applies Quadratic easing to the input value. Directionality is provided by 
+// _IN, _OUT and _BOTH variants.
+//
+// @param   t       Time Input (0 - 1)
+// @returns         Modified (t) value
+//
+Easing.QUAD_IN { #t = 0 } = {
+    #t * #t;
+}
+
+Easing.QUAD_OUT { #t = 0 } = {
+    #t = #t - 1;
+    -1 * #t * #t + 1;
+}
+
+Easing.QUAD_BOTH { #t = 0 } = {
+    #t < 0.5 ? (
+        #t = 2 * #t;
+        0.5 * #t * #t;
+    ) : (
+        #t = 2 * #t - 2;
+        -0.5 * #t * #t + 1;
+    );
+}
+
+
+
+
+// Applies Cubic easing to the input value. Directionality is provided by _IN, 
+// _OUT and _BOTH variants.
+//
+// @param   t       Time Input (0 - 1)
+// @returns         Modified (t) value
+//
+Easing.CUBIC_IN { #t = 0 } = {
+    #t * #t * #t;
+}
+
+Easing.CUBIC_OUT { #t = 0 } = {
+    #t = #t - 1;
+    #t * #t * #t + 1;
+}
+
+Easing.CUBIC_BOTH { #t = 0 } = {
+    #t < 0.5 ? (
+        #t = 2 * #t;
+        0.5 * #t * #t * #t;
+    ) : (
+        #t = 2 * #t - 2;
+        0.5 * #t * #t * #t + 1;
+    );
+}
+
+
+
+
+// Applies Quartic easing to the input value. Directionality is provided by _IN,
+// _OUT and _BOTH variants.
+//
+// @param   t       Time Input (0 - 1)
+// @returns         Modified (t) value
+//
+Easing.QUART_IN { #t = 0 } = {
+    #t * #t * #t * #t;
+}
+
+Easing.QUART_OUT { #t = 0 } = {
+    #t = #t - 1;
+    -1 * #t * #t * #t * #t + 1;
+}
+
+Easing.QUART_BOTH { #t = 0 } = {
+    #t < 0.5 ? (
+        #t = 2 * #t;
+        0.5 * #t * #t * #t * #t;
+    ) : (
+        #t = 2 * #t - 2;
+        -0.5 * #t * #t * #t * #t + 1;
+    );
+}
+
+
+
+
+// Applies Quintic easing to the input value. Directionality is provided by _IN,
+// _OUT and _BOTH variants.
+//
+// @param   t       Time Input (0 - 1)
+// @returns         Modified (t) value
+//
+Easing.QUINT_IN { #t = 0 } = {
+    #t * #t * #t * #t * #t;
+}
+
+Easing.QUINT_OUT { #t = 0 } = {
+    #t = #t - 1;
+    #t * #t * #t * #t * #t + 1;
+}
+
+Easing.QUINT_BOTH { #t = 0 } = {
+    #t < 0.5 ? (
+        #t = 2 * #t;
+        0.5 * #t * #t * #t * #t * #t;
+    ) : (
+        #t = 2 * #t - 2;
+        0.5 * #t * #t * #t * #t * #t + 1;
+    );
+}
+
+
+
+
+// Applies Sine easing to the input value. Directionality is provided by _IN,
+// _OUT and _BOTH variants.
+//
+// @param   t       Time Input (0 - 1)
+// @returns         Modified (t) value
+//
+Easing.SINE_IN { #t = 0 } = {
+    1 - Meson.cos(#t * 1.57079);    
+}
+
+Easing.SINE_OUT { #t = 0 } = {
+    Meson.sin(#t * 1.57079);
+}
+
+Easing.SINE_BOTH { #t = 0 } = {
+    -0.5 * (Meson.cos(#t * 3.14159) - 1);
+}
+
+
+
+
+// Applies Circular easing to the input value. Directionality is provided by
+// _IN, _OUT and _BOTH variants.
+//
+// @param   t       Time Input (0 - 1)
+// @returns         Modified (t) value
+//
+Easing.CIRC_IN { #t = 0 } = {
+    -1 * Meson.sqrt(1 - #t * #t) + 1;       
+}
+
+Easing.CIRC_OUT { #t = 0 } = {
+    #n = #t - 1;
+    Meson.sqrt(1 - #n * #n);
+}
+
+Easing.CIRC_BOTH { #t = 0 } = {
+    #t < 0.5 ? (
+        #n = 2 * #t;
+        -0.5 * (Meson.sqrt(1 - #n * #n) - 1);
+    ) : (
+        #n = 2 * #t - 2;
+        0.5 * (Meson.sqrt(1 - #n * #n) + 1);
+    );
+}
+
+
+
+
+// Overshoots the target, and then settles back to 1. This is a natural looking
+// easing, useful for organic motion. Directionality is provided by _IN, _OUT 
+// and _BOTH variants.
+//
+// @param   t       Time Input (0 - 1)
+// @param   s       Amount of overshoot. Good values are between 0 and 4
+// @returns         Modified (t) value
+//
+Easing.OVER_IN { #s = 1.70158, #t = 0 } = {    
+    #t * #t * ((#s + 1) * #t - #s);
+}    
+
+Easing.OVER_OUT { #s = 1.70158, #t = 0 } = {
+    #n = #t - 1;
+    #n * #n * ((#s + 1) * #n + #s) + 1;
+}
+
+Easing.OVER_BOTH { #s = 1.70158, #t = 0 } = {    
+    #r = #s * 1.525; 
+    #arg < 0.5 ? (
+        #n = #t * 2;
+        0.5 * (#n * #n * ((#r + 1) * #n - #r));     
+    ) : (
+        #n = #t * 2 - 2;
+        0.5 * ((#n * #n * ((#r + 1) * #n + #r)) + 2);
+    );        
+}
+    
+    
+
+// Creates a stretchy spring-like effect.
+//
+// @param   t       Time Input (0 - 1)
+// @param   o       Number of oscillations before it comes to rest
+// @param   k       Amount of initial stretch. Good values are between 0.75 
+//                  and 3.0
+// @returns         Modified (t) value
+//
+Easing.ELASTIC { #o = 3, #k = 1, #t = 0 } = {  
+    #d  = 1 / (2 * #k * #o);                      
+    #t < #d ? (
+        1 - Meson.cos( #t / #d * 1.57079 );     
+    ) : (
+        #c  = (#t - #d) / (1 - #d);
+        #ce = Meson.pow([ (1 - #c), 2.71828 ]);
+        #sc = Meson.sin(#c * 6.28318 * (#o - #d));
+        1 + #ce * #sc * (#k / 2.71828); 
+    );
+}    
+   
+
+
+// Creates a bounce effect similar to elastic but with no overshoot, useful for
+// bouncing things off of a floor or wall.
+//
+// @param   t       Time Input (0 - 1)
+// @param   s       Bounciness, higher number equals more bounce.  Good 
+//                  values are between 0.5 and 1.5
+// @returns         Modified (t) value   
+// 
+Easing.BOUNCE { #s = 1, #t = 0 } = {            
+    #t < (1 / 2.75) ? ( 
+        7.5625 * #t * #t; 
+    ) : ( #t < (2 / 2.75) ? ( 
+        #a = #t - 1.5 / 2.75; 
+        (7.5625 * #a * #a + 0.75) * #s + (1 - #s); 
+    ) : ( #t < (2.5 / 2.75) ? ( 
+        #a = #t - 2.25 / 2.75; 
+        (7.5625 * #a * #a + 0.9375) * #s + (1 - #s);  
+    ) : ( 
+        #a = #t - 2.625 / 2.75; 
+        (7.5625 * #a * #a + 0.984375) * #s + (1 - #s);  
+    )));
+}     
+
+
+
+
+
+
+// —————————————————————————————————————————————————————————————————————————————
+// Interpolation
+//
+// Contains functions for interpolating between values. This is the core of most
+// animation in vBriefs.
+//
+// @package     Nucleus
+// @subpackage  Anim
+// @author      Casey Visco	<cvisco@kaon.com>
+// @version     1.0.0
+// @since       0.3.0
+//
+// —————————————————————————————————————————————————————————————————————————————
+
+
+
+
+// The workhorse. Lineararly interpolates between two points. The in and out 
+// points of the interpolation are adjustable, as well as the start and end 
+// values. Optional easing can be applied by passing in a reference to an easing
+// function.
+//
+// @param   t       Time input
+// @param   i       In-point, the value of (t) at which the interpolation should
+//                  start. Any (t) value less than this will return (a)
+// @param   o       Out-point, the value of (t) at which the interpolation 
+//                  should stop. Any (t) value greater than this will return (b)
+// @param   a       Initial value, reached when (t) is equal to (i)
+// @param   b       Final value, reached when (t) is equal to (o)
+// @param   f       Optional easing function, must accept an argument (t) and
+//                  return a number
+// @return          Reference to the anonymous object
+//
+INTERP {
+    #t = 0, 
+    #i = 0, 
+    #o = 1, 
+    #a = 0, 
+    #b = 1, 
+    #f = ""
+} = { 
+    // Extract a normalized value from inpoint, outpoint and time
+    #x = ( #t < #i ? 0 : ( #t > #o ? 1 : (#t - #i) / (#o - #i) ) );
+    
+    // Apply easing to normalized value, if function is specified
+    #x = (#f != "" ? (#f)(^t = #x) : #x);
+    
+    // Interpolate between (a) and (b) given value (x) 
+    #a * (1 - #x) + #b * #x;
+} 
+
+
+
+

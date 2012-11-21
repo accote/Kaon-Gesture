@@ -1,15 +1,38 @@
-gesture{#val=[0,0,0,0,0,0]}={
-	LeftHand.x=(#val)[0];
-	LeftHand.y=(#val)[1];
-	LeftHand.z=(#val)[2];
-	RightHand.x=(#val)[3];
-	RightHand.y=(#val)[4];
-	RightHand.z=(#val)[5];
-	
-	Image.Message.text=(LeftHand.x~" "~LeftHand.y~" "~LeftHand.z~"\n"~RightHand.x~" "~RightHand.y~" "~RightHand.z);
-	
-	
+cursor1{#arg=[false, 0,0,0]}={	
+	LeftHand.x=(#arg)[1];
+	LeftHand.y=(#arg)[2];
+	LeftHand.z=(#arg)[3];	
 }
+cursor2{#arg=[false, 0,0,0]}={	
+	rightHand.x=(#arg)[1];
+	rightHand.y=(#arg)[2];
+	rightHand.z=(#arg)[3];	
+}
+
+
+
+gesture{#arg=[false, 1, 0, 0, 0]}={
+	Gesture.isActive=(#arg)[0];
+	Gesture.scale=(#arg)[1];
+	Gesture.rotate=(#arg)[2];
+	Gesture.translateX=(#arg)[3];
+	Gesture.translateY=(#arg)[4];
+}
+
+
+// 
+// gesture{#val=[0,0,0,0,0,0]}={
+// 	LeftHand.x=(#val)[0];
+// 	LeftHand.y=(#val)[1];
+// 	LeftHand.z=(#val)[2];
+// 	RightHand.x=(#val)[3];
+// 	RightHand.y=(#val)[4];
+// 	RightHand.z=(#val)[5];
+// 	
+// 	Image.Message.text=(LeftHand.x~" "~LeftHand.y~" "~LeftHand.z~"\n"~RightHand.x~" "~RightHand.y~" "~RightHand.z);
+// 	
+// 	
+// }
 
 // HairTrigger.FollowLeftHand<<
 // 	.test={Display.Primary.mouseX, Display.Primary.mouseY}
@@ -30,7 +53,6 @@ RightHand<<
 	.z=0
 	.t=0
 >>
-
 
 Image.LeftHandCursor<<
 	.parent="Display.Primary"
@@ -61,13 +83,35 @@ Image.RightHandCursor<<
 	.t={RightHand.t}
 >>
 
-//okay so, when we have a cursor we dont activate the hover. at all. that makes sense. 
+
+
+Gesture<<
+	.isActive=false
+	.scale=1
+	.rotate=0
+	.translateX=0
+	.translateY=0
+>>
+
+HairTrigger.GestureHair<<
+	.test={Gesture.scale; Gesture.rotate; Gesture.translateX; Gesture.translateY}
+	.exec={Gesture.isActive?(
+		   View.3d.fov={25/Gesture.scale};
+		   View.3d.desiredTheta={Gesture.rotate};
+		   View.3d.desiredCx={Gesture.translateX/(1920*2)+0.5};
+		   View.3d.desiredCy={Gesture.translateY/(1080*2)+0.5});
+	   }
+>>
+
+
+
+
+
+
 
 
 Area.Class<<
-	//We should overwrite area here. we should make it pay attention to leftHand and rightHand hover
-	//but we should also still listen to display.primary.press
-	
+
 	.leftHover={LeftHand.x>($$.image->absX+$$.x) & LeftHand.x<($$.image->absX+$$.x+$$.width*$$.image->scaleX) &
  			    LeftHand.y>($$.image->absY+$$.y) & LeftHand.y<($$.image->absY+$$.y+$$.height*$$.image->scaleY)}
 	.leftPress={$$.press=true}
@@ -80,9 +124,6 @@ Area.Class<<
 	.rightPress={$$.press=true}
 	
 	.rightT=0
-	
-	//we need hover to still isten to mouse. so we dont want it to be turned off when not hovering. so we can't flag it. oh wait! yes we can. because its onyl for this area.
-	//i think thats appropriate. i feel fine with that.
 	
 	
 	.new= Area.Class.new + {		

@@ -33,7 +33,8 @@ fontScale={compactLayout?(#s=insetHeight/1080;#s>1?1:#s):1}
 
 screenSaverActive=(screenSaverActive==""?false:screenSaverActive)
 
-Image.Loading.layer=20
+Image.Loading.layer=-1
+//Image.Loading.layer=20
 
 // Disable shutdown delay when there is not a touch screen.  People do not click the wrong thing when they use a mouse!
 !Meson.touchScreen?(ShutdownDelay=0)
@@ -521,275 +522,275 @@ IPadMenuButton.IPadReset<<
 /*___________________________________________________________*/
 
 
-
-
-Style.SectionTitle<<
-  .fontSize={fontScale*35}
-  .fontWeight=_BOLD
-  .color="4a4949"
-  .lineSpacing={fontScale*10}
->>
-Style.SectionSubTitle<<
-  .fontSize={fontScale*21}
-  .fontWeight=_BOLD
-  .color={colorTheme}
-  .lineSpacing={fontScale*10}
->>
-Style.SectionContent<<
-  .margin={fontScale*10}
-  .fontSize={fontScale*20}
-  .color="4a4949"
-  .lineSpacing={fontScale*10}
->>
-
-Image.SectionBg<<
-  .layer={ipadMode&!fullMode?0:-1}
-  .x=41
-  .y=189
-  .file="img/sectionBg.png"
->>
-
-sectionButtonCounter=0
-sectionLayout=[]
-sectionButtonsWidth={sectionLayout==[]?0:sectionLayout[Meson.length(sectionLayout)-1]->right}
-hasSections={sectionLayout!=[]}
-
-currentGraphic=""
-currentGraphicOffset={currentGraphic!=""?currentGraphic->offset:0}
-Style.Bold.fontSmooth=2
-Image.SectionContent<<
-  .x={ipadMode?75:115*fontScale}
-  .y={ipadMode?290:(insetBottom+currentGraphicOffset)/2}
-  .wrapWidth={ipadMode?800:600*fontScale}
-  .layer={fullMode?-1:10}
-  .anchor={ipadMode?_NW:_W}
-  .label=""
-  .tabStops={[50*fontScale,80*fontScale,110*fontScale]}
-  .title={currentSectionButton->place==0?"%SectionTitle{"~currentProductTitle~"\n}%SectionSubTitle{"~currentProductSubTitle~"}\n\n":""}
-  .text={"%SectionContent{"~$$$.title~Image.SectionContent.label~"}"}
-  .noOrphan=true
->>
-Anim.SCAnim<<
-  .attr=["Image.SectionContent.alpha"]
-  .goal=[1]
-  .rate=1
->>
-
-SectionGraphic.extends="Image"
-SectionGraphic.Class<<
-  .parent="Image.SectionContent"
-  .section=""
-  .layer={currentSection==$$.section?1:-1}
-  .x={Image.SectionContent.wrapWidth/2}
-  .y={$$.anchor==_N?Image.SectionContent.height+5:-5}
-  .offset={$$.layer==-1?0:($$.anchor==_N?0-$$.height:$$.height)}
-  .new={
-    Trigger.Show$.test={$$.layer!=-1};
-    Trigger.Show$.exec={currentGraphic="$$"};
-  }
->>
-SectionScript.extends=""
-SectionScript.Class<<
-  .section=""
-  .script=""
-  .new={
-    Trigger.RunScript$.test={currentSection==$$.section};
-    Trigger.RunScript$.exec={Scene.3d.playStartSlow($$.script)};
-  }
->>
-
-Style.PageNumber<<
-  _plain.fontFamily=["SansSerif"]
-  _plain.fontSize={16*fontScale}
-  _plain.color="4a4949"
-  _hover.fontFamily=["SansSerif"]
-  _hover.fontSize={16*fontScale}
-  _hover.color={colorTheme}
->>
-Style.PageLabel<<
-  .fontSize={(language=="fr"?13:16)*fontScale}
-  .color="4a4949"
->>
-
-currentSectionButton={currentSection==""?"":("SectionButton."~currentSection)}
-Image.SectionNext<<
-  .x={Image.SectionContent.x+Image.SectionContent.wrapWidth-73*fontScale}
-  .y={ipadMode?900:insetBottom-130}
-  .anchor=_SW
-  .states=["plain","hover"]
-  .file="img/arrow_right.png"
-  .layer={initMode|fullMode?-1:4}
-  .scaleX={fontScale}
-  .scaleY={fontScale}
->>
-Image.SectionPrev<<
-  .x={Image.SectionContent.x+100*fontScale}
-  .y={Image.SectionNext.y}
-  .anchor=_SE
-  .states=["plain","hover"]
-  .file="img/arrow_left.png"
-  .layer={initMode|fullMode?-1:4}
-  .scaleX={fontScale}
-  .scaleY={fontScale}
->>
-Image.PageLabel<<
-  .text={"%PageLabel{"~currentSectionButton->label~"   "~l10n("Page")~" }"}
-  .x={(Image.SectionPrev.x+Image.SectionNext.x-20*currentSectionButton->numberOfSectionPages)/2}
-  .y={Image.SectionNext.y-15}
-  .anchor=_S
-  .layer={initMode|fullMode?-1:0}
-  .wrapWidth={1000*fontScale}
->>
-Area.SectionNext<<
-  .image="Image.SectionNext"
-  .state={Area.SectionNext.hover|Meson.touchScreen?"hover":"plain"}
-  .boxPick=true
-  .cursor=HAND
->>
-Area.SectionPrev<<
-  .image="Image.SectionPrev"
-  .state={Area.SectionPrev.hover|Meson.touchScreen?"hover":"plain"}
-  .boxPick=true
-  .cursor=HAND
->>
-Trigger.SectionNextPage.test={Area.SectionNext.press}
-Trigger.SectionNextPage.exec={currentSectionButton->nextSection()}
-Trigger.SectionPrevPage.test={Area.SectionPrev.press}
-Trigger.SectionPrevPage.exec={currentSectionButton->prevSection()}
-
-Style.SectionButton<<
-  _plain.color=black
-  _hover.color={ipadMode?black:white}
-  _plain.fontWeight=_BOLD
-  _hover.fontWeight=_BOLD
-  _plain.fontSize={ipadMode?16:fontScale*18}
-  _hover.fontSize={ipadMode?16:fontScale*18}
-  _plain.margin=4
-  _hover.margin=4
-  _plain.lineSpacing=4
-  _hover.lineSpacing=4
->>
-
-Image.SectionButtons<<
-  .x={ipadMode?79:(Image.MercuryGoBack.x+75)}
-  .y={ipadMode?207:(insetBottom-60)}
->>
-
-currentSection=""
-SectionButton.extends="Image"
-SectionButton.Class<<
-  .parent="Image.SectionButtons"
-  .x={$$.place==0?0:sectionLayout[$$.place-1]->right};
-  .label=""
-  .sectionText=""
-  .nextSection={$$.place==Meson.length(sectionLayout)-1?sectionLayout[0]->exec():sectionLayout[$$.place+1]->exec()}
-  .prevSection={$$.place==0?sectionLayout[Meson.length(sectionLayout)-1]->exec():sectionLayout[$$.place-1]->exec()}
-  .hasNext={$$.place!=Meson.length(sectionLayout)-1}
-  .hasPrev={$$.place!=0}
-  .next={$$.hasNext?sectionLayout[$$.place+1]:""}
-  .numberOfSectionPages={$$.hasNext&$$.next->isPage?$$.next->numberOfSectionPages:$$.pageNumber}
-  .exec={currentSection="$";fullMode={attractMode==true}}
-  .layer={$$.label==""|$$.isPage|(ipadMode&fullMode)?-1:1}
-  .right={$$.isPage?$$.x:$$.x+(ipadMode?225:($$.width+25*fontScale))}
-  .anchor=_NW
-  .states=["plain","hover"]
-  .text={"%SectionButton_#{"~$$.label~"}"}
-  .wrapWidth={iPadMode?160:fontScale*150}
-  .isPage={$$.place>0&sectionLayout[$$.place-1]->label==$$.label}
-  .place=0
-  .position={$$.place==0?0:(#p=sectionLayout[$$.place-1];(#p)->label==$$.label?(#p)->position:1+(#p)->position)}
-  .pageNumber={!$$.isPage?1:1+sectionLayout[$$.place-1]->pageNumber}
-  .showActive={currentSection!=""&currentSectionButton->label==$$.label}
-  .new={
-    $$.place=sectionButtonCounter;
-    sectionButtonCounter=sectionButtonCounter+1;
-    sectionLayout[$$.place]="$$";
-    Area.$.image="$$";
-    Area.$.state={$$.showActive?"hover":"plain"};
-    Area.$.boxPick=true;
-    Area.$.cursor=HAND;
-    Image.$_tab.parent="Image.SectionButtons";
-    Image.$_tab.x={$$.x-28};
-    Image.$_tab.y={$$.y-8};
-    Image.$_tab.dataSource=programDataSource;
-    Image.$_tab.file="img/sec_tab.png";
-    Image.$_tab.layer={$$.showActive&ipadMode&!$$.isPage?0:-1};
-    Image.$_bg.parent="Image.SectionButtons";
-    Image.$_bg.x={$$.x};
-    Image.$_bg.y={$$.y};
-    Image.$_bg.width={$$.width};
-    Image.$_bg.height={insetBottom-$$.absY};
-    Image.$_bg.buffer={colorTheme};
-    Image.$_bg.layer={$$.showActive&!ipadMode?0:-1};
-    Image.$_sep.parent="Image.SectionButtons";
-    Image.$_sep.x={$$.x+$$.width+12};
-    Image.$_sep.y={$$.y};
-    Image.$_sep.width=1;
-    Image.$_sep.height={insetBottom-$$.absY-20};
-    Image.$_sep.buffer="ccc";
-    Image.$_sep.layer={$$.isPage|ipadMode?-1:1};
-    $$.place==0&hasMainMenu?(
-      Image.$_sep2.parent="Image.SectionButtons";
-      Image.$_sep2.x={$$.x-12};
-      Image.$_sep2.y={$$.y};
-      Image.$_sep2.width=1;
-      Image.$_sep2.height={insetBottom-$$.absY-20};
-      Image.$_sep2.buffer="ccc";
-      Image.$_sep2.layer={ipadMode?-1:1};
-    );
-    Image.$_page.text={"%PageNumber_#{"~(currentSection=="$"?("["~Meson.round($$.pageNumber)~"]"):Meson.round($$.pageNumber))~"}"};
-    Image.$_page.states=["plain","hover"];
-    Image.$_page.x={Image.PageLabel.x+Image.PageLabel.width/2+(10+($$.pageNumber-1)*20)};
-    Image.$_page.y={Image.PageLabel.y};
-    Image.$_page.anchor=_S;
-    Image.$_page.layer={currentSection!=""&currentSectionButton->label==$$.label?Image.PageLabel.layer:-1};
-    Image.$_page.wrapWidth={fontScale*1920};
-    Area.$_page.image="Image.$_page";
-    Area.$_page.boxPick=true;
-    Area.$_page.state={Area.$_page.hover?"hover":"plain"};
-    Trigger.$_press.test={Area.$.press|Area.$_page.press};
-    Trigger.$_press.exec={$$.exec()};
-    currentSection==""&!startWith3D?$$.exec();
-  }
->>
-Trigger.SmallMode.test={!fullMode}
-Trigger.SmallMode.exec={ClickOnReset();currentBeautyShot!=""?Scene.3d.playInstantly(currentBeautyShot)}
-
-ChangeTrigger.ChangeSection.test={currentSection}
-ChangeTrigger.ChangeSection.exec={
-    Image.SectionContent.label={currentSectionButton->sectionText};
-    Image.SectionContent.alpha=-0.6;
-}
-
-Image.TourButton<<
-  .parent="Image.SectionButtons"
-  .x={sectionButtonCounter==0?0:sectionLayout[sectionButtonCounter-1]->right};
-  .label={l10n("Tour")}
-  .exec={Trigger.Start3D.exec()}
-  .layer={Scene.3d.absVisible&!ipadMode&sectionLayout!=[]?1:-1}
-  .anchor=_NW
-  .states=["plain","hover"]
-  .text={"%SectionButton_#{"~$$$.label~"}"}
-  .showActive={fullMode&!ipadMode}
-  .wrapWidth={500*fontScale}
-  .init={
-    Area.TourButton.image="$$$";
-    Area.TourButton.state={$$$.showActive?"hover":"plain"};
-    Area.TourButton.boxPick=true;
-    Area.TourButton.cursor=HAND;
-    Image.TourButton_bg.parent="Image.SectionButtons";
-    Image.TourButton_bg.x={$$$.x};
-    Image.TourButton_bg.y={$$$.y};
-    Image.TourButton_bg.width={$$$.width};
-    Image.TourButton_bg.height={insetBottom-$$$.absY};
-    Image.TourButton_bg.buffer={colorTheme};
-    Image.TourButton_bg.layer={$$$.showActive?0:-1};
-    Trigger.TourButton_press.test={Area.TourButton.press};
-    Trigger.TourButton_press.exec={$$$.exec()};
-  }
-  .init()
->>
-
+// 
+// 
+// Style.SectionTitle<<
+//   .fontSize={fontScale*35}
+//   .fontWeight=_BOLD
+//   .color="4a4949"
+//   .lineSpacing={fontScale*10}
+// >>
+// Style.SectionSubTitle<<
+//   .fontSize={fontScale*21}
+//   .fontWeight=_BOLD
+//   .color={colorTheme}
+//   .lineSpacing={fontScale*10}
+// >>
+// Style.SectionContent<<
+//   .margin={fontScale*10}
+//   .fontSize={fontScale*20}
+//   .color="4a4949"
+//   .lineSpacing={fontScale*10}
+// >>
+// 
+// Image.SectionBg<<
+//   .layer={ipadMode&!fullMode?0:-1}
+//   .x=41
+//   .y=189
+//   .file="img/sectionBg.png"
+// >>
+// 
+// sectionButtonCounter=0
+// sectionLayout=[]
+// sectionButtonsWidth={sectionLayout==[]?0:sectionLayout[Meson.length(sectionLayout)-1]->right}
+// hasSections={sectionLayout!=[]}
+// 
+// currentGraphic=""
+// currentGraphicOffset={currentGraphic!=""?currentGraphic->offset:0}
+// Style.Bold.fontSmooth=2
+// Image.SectionContent<<
+//   .x={ipadMode?75:115*fontScale}
+//   .y={ipadMode?290:(insetBottom+currentGraphicOffset)/2}
+//   .wrapWidth={ipadMode?800:600*fontScale}
+//   .layer={fullMode?-1:10}
+//   .anchor={ipadMode?_NW:_W}
+//   .label=""
+//   .tabStops={[50*fontScale,80*fontScale,110*fontScale]}
+//   .title={currentSectionButton->place==0?"%SectionTitle{"~currentProductTitle~"\n}%SectionSubTitle{"~currentProductSubTitle~"}\n\n":""}
+//   .text={"%SectionContent{"~$$$.title~Image.SectionContent.label~"}"}
+//   .noOrphan=true
+// >>
+// Anim.SCAnim<<
+//   .attr=["Image.SectionContent.alpha"]
+//   .goal=[1]
+//   .rate=1
+// >>
+// 
+// SectionGraphic.extends="Image"
+// SectionGraphic.Class<<
+//   .parent="Image.SectionContent"
+//   .section=""
+//   .layer={currentSection==$$.section?1:-1}
+//   .x={Image.SectionContent.wrapWidth/2}
+//   .y={$$.anchor==_N?Image.SectionContent.height+5:-5}
+//   .offset={$$.layer==-1?0:($$.anchor==_N?0-$$.height:$$.height)}
+//   .new={
+//     Trigger.Show$.test={$$.layer!=-1};
+//     Trigger.Show$.exec={currentGraphic="$$"};
+//   }
+// >>
+// SectionScript.extends=""
+// SectionScript.Class<<
+//   .section=""
+//   .script=""
+//   .new={
+//     Trigger.RunScript$.test={currentSection==$$.section};
+//     Trigger.RunScript$.exec={Scene.3d.playStartSlow($$.script)};
+//   }
+// >>
+// 
+// Style.PageNumber<<
+//   _plain.fontFamily=["SansSerif"]
+//   _plain.fontSize={16*fontScale}
+//   _plain.color="4a4949"
+//   _hover.fontFamily=["SansSerif"]
+//   _hover.fontSize={16*fontScale}
+//   _hover.color={colorTheme}
+// >>
+// Style.PageLabel<<
+//   .fontSize={(language=="fr"?13:16)*fontScale}
+//   .color="4a4949"
+// >>
+// 
+// currentSectionButton={currentSection==""?"":("SectionButton."~currentSection)}
+// Image.SectionNext<<
+//   .x={Image.SectionContent.x+Image.SectionContent.wrapWidth-73*fontScale}
+//   .y={ipadMode?900:insetBottom-130}
+//   .anchor=_SW
+//   .states=["plain","hover"]
+//   .file="img/arrow_right.png"
+//   .layer={initMode|fullMode?-1:4}
+//   .scaleX={fontScale}
+//   .scaleY={fontScale}
+// >>
+// Image.SectionPrev<<
+//   .x={Image.SectionContent.x+100*fontScale}
+//   .y={Image.SectionNext.y}
+//   .anchor=_SE
+//   .states=["plain","hover"]
+//   .file="img/arrow_left.png"
+//   .layer={initMode|fullMode?-1:4}
+//   .scaleX={fontScale}
+//   .scaleY={fontScale}
+// >>
+// Image.PageLabel<<
+//   .text={"%PageLabel{"~currentSectionButton->label~"   "~l10n("Page")~" }"}
+//   .x={(Image.SectionPrev.x+Image.SectionNext.x-20*currentSectionButton->numberOfSectionPages)/2}
+//   .y={Image.SectionNext.y-15}
+//   .anchor=_S
+//   .layer={initMode|fullMode?-1:0}
+//   .wrapWidth={1000*fontScale}
+// >>
+// Area.SectionNext<<
+//   .image="Image.SectionNext"
+//   .state={Area.SectionNext.hover|Meson.touchScreen?"hover":"plain"}
+//   .boxPick=true
+//   .cursor=HAND
+// >>
+// Area.SectionPrev<<
+//   .image="Image.SectionPrev"
+//   .state={Area.SectionPrev.hover|Meson.touchScreen?"hover":"plain"}
+//   .boxPick=true
+//   .cursor=HAND
+// >>
+// Trigger.SectionNextPage.test={Area.SectionNext.press}
+// Trigger.SectionNextPage.exec={currentSectionButton->nextSection()}
+// Trigger.SectionPrevPage.test={Area.SectionPrev.press}
+// Trigger.SectionPrevPage.exec={currentSectionButton->prevSection()}
+// 
+// Style.SectionButton<<
+//   _plain.color=black
+//   _hover.color={ipadMode?black:white}
+//   _plain.fontWeight=_BOLD
+//   _hover.fontWeight=_BOLD
+//   _plain.fontSize={ipadMode?16:fontScale*18}
+//   _hover.fontSize={ipadMode?16:fontScale*18}
+//   _plain.margin=4
+//   _hover.margin=4
+//   _plain.lineSpacing=4
+//   _hover.lineSpacing=4
+// >>
+// 
+// Image.SectionButtons<<
+//   .x={ipadMode?79:(Image.MercuryGoBack.x+75)}
+//   .y={ipadMode?207:(insetBottom-60)}
+// >>
+// 
+// currentSection=""
+// SectionButton.extends="Image"
+// SectionButton.Class<<
+//   .parent="Image.SectionButtons"
+//   .x={$$.place==0?0:sectionLayout[$$.place-1]->right};
+//   .label=""
+//   .sectionText=""
+//   .nextSection={$$.place==Meson.length(sectionLayout)-1?sectionLayout[0]->exec():sectionLayout[$$.place+1]->exec()}
+//   .prevSection={$$.place==0?sectionLayout[Meson.length(sectionLayout)-1]->exec():sectionLayout[$$.place-1]->exec()}
+//   .hasNext={$$.place!=Meson.length(sectionLayout)-1}
+//   .hasPrev={$$.place!=0}
+//   .next={$$.hasNext?sectionLayout[$$.place+1]:""}
+//   .numberOfSectionPages={$$.hasNext&$$.next->isPage?$$.next->numberOfSectionPages:$$.pageNumber}
+//   .exec={currentSection="$";fullMode={attractMode==true}}
+//   .layer={$$.label==""|$$.isPage|(ipadMode&fullMode)?-1:1}
+//   .right={$$.isPage?$$.x:$$.x+(ipadMode?225:($$.width+25*fontScale))}
+//   .anchor=_NW
+//   .states=["plain","hover"]
+//   .text={"%SectionButton_#{"~$$.label~"}"}
+//   .wrapWidth={iPadMode?160:fontScale*150}
+//   .isPage={$$.place>0&sectionLayout[$$.place-1]->label==$$.label}
+//   .place=0
+//   .position={$$.place==0?0:(#p=sectionLayout[$$.place-1];(#p)->label==$$.label?(#p)->position:1+(#p)->position)}
+//   .pageNumber={!$$.isPage?1:1+sectionLayout[$$.place-1]->pageNumber}
+//   .showActive={currentSection!=""&currentSectionButton->label==$$.label}
+//   .new={
+//     $$.place=sectionButtonCounter;
+//     sectionButtonCounter=sectionButtonCounter+1;
+//     sectionLayout[$$.place]="$$";
+//     Area.$.image="$$";
+//     Area.$.state={$$.showActive?"hover":"plain"};
+//     Area.$.boxPick=true;
+//     Area.$.cursor=HAND;
+//     Image.$_tab.parent="Image.SectionButtons";
+//     Image.$_tab.x={$$.x-28};
+//     Image.$_tab.y={$$.y-8};
+//     Image.$_tab.dataSource=programDataSource;
+//     Image.$_tab.file="img/sec_tab.png";
+//     Image.$_tab.layer={$$.showActive&ipadMode&!$$.isPage?0:-1};
+//     Image.$_bg.parent="Image.SectionButtons";
+//     Image.$_bg.x={$$.x};
+//     Image.$_bg.y={$$.y};
+//     Image.$_bg.width={$$.width};
+//     Image.$_bg.height={insetBottom-$$.absY};
+//     Image.$_bg.buffer={colorTheme};
+//     Image.$_bg.layer={$$.showActive&!ipadMode?0:-1};
+//     Image.$_sep.parent="Image.SectionButtons";
+//     Image.$_sep.x={$$.x+$$.width+12};
+//     Image.$_sep.y={$$.y};
+//     Image.$_sep.width=1;
+//     Image.$_sep.height={insetBottom-$$.absY-20};
+//     Image.$_sep.buffer="ccc";
+//     Image.$_sep.layer={$$.isPage|ipadMode?-1:1};
+//     $$.place==0&hasMainMenu?(
+//       Image.$_sep2.parent="Image.SectionButtons";
+//       Image.$_sep2.x={$$.x-12};
+//       Image.$_sep2.y={$$.y};
+//       Image.$_sep2.width=1;
+//       Image.$_sep2.height={insetBottom-$$.absY-20};
+//       Image.$_sep2.buffer="ccc";
+//       Image.$_sep2.layer={ipadMode?-1:1};
+//     );
+//     Image.$_page.text={"%PageNumber_#{"~(currentSection=="$"?("["~Meson.round($$.pageNumber)~"]"):Meson.round($$.pageNumber))~"}"};
+//     Image.$_page.states=["plain","hover"];
+//     Image.$_page.x={Image.PageLabel.x+Image.PageLabel.width/2+(10+($$.pageNumber-1)*20)};
+//     Image.$_page.y={Image.PageLabel.y};
+//     Image.$_page.anchor=_S;
+//     Image.$_page.layer={currentSection!=""&currentSectionButton->label==$$.label?Image.PageLabel.layer:-1};
+//     Image.$_page.wrapWidth={fontScale*1920};
+//     Area.$_page.image="Image.$_page";
+//     Area.$_page.boxPick=true;
+//     Area.$_page.state={Area.$_page.hover?"hover":"plain"};
+//     Trigger.$_press.test={Area.$.press|Area.$_page.press};
+//     Trigger.$_press.exec={$$.exec()};
+//     currentSection==""&!startWith3D?$$.exec();
+//   }
+// >>
+// Trigger.SmallMode.test={!fullMode}
+// Trigger.SmallMode.exec={ClickOnReset();currentBeautyShot!=""?Scene.3d.playInstantly(currentBeautyShot)}
+// 
+// ChangeTrigger.ChangeSection.test={currentSection}
+// ChangeTrigger.ChangeSection.exec={
+//     Image.SectionContent.label={currentSectionButton->sectionText};
+//     Image.SectionContent.alpha=-0.6;
+// }
+// 
+// Image.TourButton<<
+//   .parent="Image.SectionButtons"
+//   .x={sectionButtonCounter==0?0:sectionLayout[sectionButtonCounter-1]->right};
+//   .label={l10n("Tour")}
+//   .exec={Trigger.Start3D.exec()}
+//   .layer={Scene.3d.absVisible&!ipadMode&sectionLayout!=[]?1:-1}
+//   .anchor=_NW
+//   .states=["plain","hover"]
+//   .text={"%SectionButton_#{"~$$$.label~"}"}
+//   .showActive={fullMode&!ipadMode}
+//   .wrapWidth={500*fontScale}
+//   .init={
+//     Area.TourButton.image="$$$";
+//     Area.TourButton.state={$$$.showActive?"hover":"plain"};
+//     Area.TourButton.boxPick=true;
+//     Area.TourButton.cursor=HAND;
+//     Image.TourButton_bg.parent="Image.SectionButtons";
+//     Image.TourButton_bg.x={$$$.x};
+//     Image.TourButton_bg.y={$$$.y};
+//     Image.TourButton_bg.width={$$$.width};
+//     Image.TourButton_bg.height={insetBottom-$$$.absY};
+//     Image.TourButton_bg.buffer={colorTheme};
+//     Image.TourButton_bg.layer={$$$.showActive?0:-1};
+//     Trigger.TourButton_press.test={Area.TourButton.press};
+//     Trigger.TourButton_press.exec={$$$.exec()};
+//   }
+//   .init()
+// >>
+// 
 
 
 /*___________________________________________________________*/
@@ -1159,11 +1160,11 @@ tightScriptButtons=false
 
 Image.ControlPanel<<
   .anchor={ipadMode?_SE:_NW}
-  .layer={!screenSaverActive&!initMode&fullMode&$$$.scaleY>0?1:-1}
+  //.layer={!screenSaverActive&!initMode&fullMode&$$$.scaleY>0?1:-1}
   .width={fontScale*358}
-  .height={lastScriptButtonBottom+(ipadMode?3:171)*fontScale}
+  .height={lastScriptButtonBottom+(ipadMode?3:10)*fontScale}
   .buffer="efefef"
-  .x={ipadMode?Image.Animations.xNE:insetLeft+40}
+  //.x={ipadMode?Image.Animations.xNE:insetLeft+40}
   .goalY={ipadMode?Image.Animations.yNE:stashControlPanel?theDisplay->height-productTitleBottom:insetBottom/2-$$$.height/2}
   .y=$$$.goalY
   .bloop={ipadMode?0:1}
@@ -1517,215 +1518,215 @@ Anim.HSIAlpha<<
 /*  				Controls like rotate and pan			 */
 /*___________________________________________________________*/
 
-
-thetaSnapAng={thetaSnap==1?180:360/thetaSnap}
-ChangeTrigger.ThetaSnap.test={(thetaSnap<1|theDisplay->press)?0:View.3d.desiredTheta}
-ChangeTrigger.ThetaSnap.exec={ChangeTrigger.ThetaSnap.test!=0?(
-  View.3d.desiredTheta=thetaSnapAng*Meson.round(View.3d.desiredTheta/thetaSnapAng);
-  View.3d.desiredPhi=0;
-)}
-
-panLock={thetaSnap==1}
-panLocked={panLock&(allPlayingScripts==[])}
-hasHotSpots=false
-
-Trigger.PanLock.test={panLocked&(Scene.3d.mode!=_MOVE)}
-Trigger.PanLock.exec={Scene.3d.mode=_MOVE}
-Trigger.PanUnlock.test={!panLocked}
-Trigger.PanUnlock.exec={Scene.3d.mode=_ROTATE}
-
-
-FilterDilate.DilateColorFilter<<
-  .color={colorTheme}
-  .dilate=3
->>
-FilteredImage.Tools<<
-  .parent="Image.ControlPanel"
-  .file="img/cpanel.png"
-  .y={Image.ControlPanel.height-8}
-  .x={10*fontScale}
-  .anchor=_SW
-  .states=["off","on"]
-  .scaleX={fontScale}
-  .scaleY={fontScale}
-  .layer={ipadMode?-1:0}
-  .effectPipeline=["FilterEffect.DilateColorFilter",filterNoEffect]
->>
-Anim.FadeTools<<
-  .attr=["Image.Tools.alpha"]
-  .goal=[1]
-  .rate=2
->>
-Trigger.FadeToolsStart.test={fullMode}
-Trigger.FadeToolsStart.exec={Image.Tools.alpha=-2}
-
-Style.Tool<<
-  _off.fontSize={l10n("toolFontSize")*fontScale}
-  _off.color="4a4949"
-  _on.fontSize={l10n("toolFontSize")*fontScale}
-  _on.color={colorTheme}
->>
-
-ToolButton.extends="Area"
-ToolButton.Class<<
-  .image="Image.Tools"
-  .active=false
-  .boxPick=true
-  .state={$$.active?"on":"off"}
-  .cursor=HAND
-  .y=105
-  .width=68
-  .height=48
-  .new={
-    Image.$_lbl.parent="Image.Tools";
-    Image.$_lbl.anchor=_S;
-    Image.$_lbl.x={$$.x+$$.width/2};
-    Image.$_lbl.y={$$.y+$$.height-2};
-    Image.$_lbl.text={"%Tool_#{"~l10n("$")~"}"};
-    Image.$_lbl.states=["off","on"];
-    Image.$_lbl.enabled=false;
-    Image.$_lbl.alpha={$$.enabled?1:0.25};
-    Image.$_lbl.scaleX={1/fontScale};
-    Image.$_lbl.scaleY={1/fontScale};
-    Image.$_lbl.wrapWidth={1000*fontScale};
-    Area.$_lbl.image="Image.$_lbl";
-    Area.$_lbl.state={$$.state};
-    Trigger.$_press.test={$$.press};
-    Trigger.$_press.exec={ClickOn$()};
-  }
->>
-
-ToolButton.Move.x=202
-ToolButton.Move.active={Scene.3d.mode==_MOVE}
-ToolButton.Turn.x=132
-ToolButton.Turn.active={Scene.3d.mode==_ROTATE}
-ToolButton.Turn.enabled={!panLocked}
-ToolButton.Measure.x=271
-ToolButton.Measure.active={Scene.3d.mode==_MEASURE}
-ToolButton.Measure.enabled={includeMeasure&!panLocked}
-ToolButton.Reset.x=1
-ToolButton.Reset.y=55
-ToolButton.Reset.height=98
-ToolButton.Reset.active={Area.Reset.press}
-ToolButton.Auto.x=1
-ToolButton.Auto.y=1
-ToolButton.Auto.height=25
-ToolButton.Auto.active={autoRunMode}
-ToolButton.Notes.x=133  
-ToolButton.Notes.y=1
-ToolButton.Notes.width=206
-ToolButton.Notes.height=25
-ToolButton.Notes.active={showNotes}
-ToolButton.Notes.enabled={hasHotSpots}
-Image.Notes_lbl.alpha={hasHotSpots?1:0.2}
-Image.Notes_lbl.text={"%Tool_#{"~(showNotes?l10n("NoNotes"):l10n("Notes"))~"}"};
-
-zoomIndex={#f=(View.3d.maxFOV-View.3d.minFOV);#f==0?1:1+4*(View.3d.maxFOV-View.3d.fov)/#f}
+// 
+// thetaSnapAng={thetaSnap==1?180:360/thetaSnap}
+// ChangeTrigger.ThetaSnap.test={(thetaSnap<1|theDisplay->press)?0:View.3d.desiredTheta}
+// ChangeTrigger.ThetaSnap.exec={ChangeTrigger.ThetaSnap.test!=0?(
+//   View.3d.desiredTheta=thetaSnapAng*Meson.round(View.3d.desiredTheta/thetaSnapAng);
+//   View.3d.desiredPhi=0;
+// )}
+// 
+// panLock={thetaSnap==1}
+// panLocked={panLock&(allPlayingScripts==[])}
+// hasHotSpots=false
+// 
+// Trigger.PanLock.test={panLocked&(Scene.3d.mode!=_MOVE)}
+// Trigger.PanLock.exec={Scene.3d.mode=_MOVE}
+// Trigger.PanUnlock.test={!panLocked}
+// Trigger.PanUnlock.exec={Scene.3d.mode=_ROTATE}
+// 
+// 
+// FilterDilate.DilateColorFilter<<
+//   .color={colorTheme}
+//   .dilate=3
+// >>
+// FilteredImage.Tools<<
+//   .parent="Image.ControlPanel"
+//   .file="img/cpanel.png"
+//   .y={Image.ControlPanel.height-8}
+//   .x={10*fontScale}
+//   .anchor=_SW
+//   .states=["off","on"]
+//   .scaleX={fontScale}
+//   .scaleY={fontScale}
+//   .layer={ipadMode?-1:0}
+//   .effectPipeline=["FilterEffect.DilateColorFilter",filterNoEffect]
+// >>
+// Anim.FadeTools<<
+//   .attr=["Image.Tools.alpha"]
+//   .goal=[1]
+//   .rate=2
+// >>
+// Trigger.FadeToolsStart.test={fullMode}
+// Trigger.FadeToolsStart.exec={Image.Tools.alpha=-2}
+// 
+// Style.Tool<<
+//   _off.fontSize={l10n("toolFontSize")*fontScale}
+//   _off.color="4a4949"
+//   _on.fontSize={l10n("toolFontSize")*fontScale}
+//   _on.color={colorTheme}
+// >>
+// 
+// ToolButton.extends="Area"
+// ToolButton.Class<<
+//   .image="Image.Tools"
+//   .active=false
+//   .boxPick=true
+//   .state={$$.active?"on":"off"}
+//   .cursor=HAND
+//   .y=105
+//   .width=68
+//   .height=48
+//   .new={
+//     Image.$_lbl.parent="Image.Tools";
+//     Image.$_lbl.anchor=_S;
+//     Image.$_lbl.x={$$.x+$$.width/2};
+//     Image.$_lbl.y={$$.y+$$.height-2};
+//     Image.$_lbl.text={"%Tool_#{"~l10n("$")~"}"};
+//     Image.$_lbl.states=["off","on"];
+//     Image.$_lbl.enabled=false;
+//     Image.$_lbl.alpha={$$.enabled?1:0.25};
+//     Image.$_lbl.scaleX={1/fontScale};
+//     Image.$_lbl.scaleY={1/fontScale};
+//     Image.$_lbl.wrapWidth={1000*fontScale};
+//     Area.$_lbl.image="Image.$_lbl";
+//     Area.$_lbl.state={$$.state};
+//     Trigger.$_press.test={$$.press};
+//     Trigger.$_press.exec={ClickOn$()};
+//   }
+// >>
+// 
+// ToolButton.Move.x=202
+// ToolButton.Move.active={Scene.3d.mode==_MOVE}
+// ToolButton.Turn.x=132
+// ToolButton.Turn.active={Scene.3d.mode==_ROTATE}
+// ToolButton.Turn.enabled={!panLocked}
+// ToolButton.Measure.x=271
+// ToolButton.Measure.active={Scene.3d.mode==_MEASURE}
+// ToolButton.Measure.enabled={includeMeasure&!panLocked}
+// ToolButton.Reset.x=1
+// ToolButton.Reset.y=55
+// ToolButton.Reset.height=98
+// ToolButton.Reset.active={Area.Reset.press}
+// ToolButton.Auto.x=1
+// ToolButton.Auto.y=1
+// ToolButton.Auto.height=25
+// ToolButton.Auto.active={autoRunMode}
+// ToolButton.Notes.x=133  
+// ToolButton.Notes.y=1
+// ToolButton.Notes.width=206
+// ToolButton.Notes.height=25
+// ToolButton.Notes.active={showNotes}
+// ToolButton.Notes.enabled={hasHotSpots}
+// Image.Notes_lbl.alpha={hasHotSpots?1:0.2}
+// Image.Notes_lbl.text={"%Tool_#{"~(showNotes?l10n("NoNotes"):l10n("Notes"))~"}"};
+// 
+// zoomIndex={#f=(View.3d.maxFOV-View.3d.minFOV);#f==0?1:1+4*(View.3d.maxFOV-View.3d.fov)/#f}
 setZoomIndex={#a=(#arg-1)/4;View.3d.setDesiredFov(#a*View.3d.minFOV + (1-#a)*View.3d.maxFOV)}
-
-FilterEffect.ColorFilter<<
-  .color={colorTheme}
-  .blur=0.25
->>
-
+// 
+// FilterEffect.ColorFilter<<
+//   .color={colorTheme}
+//   .blur=0.25
+// >>
+// 
 
 /*___________________________________________________________*/
 /*															 */
 /*  				züm										 */
 /*___________________________________________________________*/
 
-
-ZoomButton.extends="FilteredImage"
-ZoomButton.Class<<
-  .parent="Image.Tools"
-  .index=1
-  .file={"img/z"~Meson.round($$.index)~".png"}
-  .y=60
-  .alpha={#a=(zoomIndex-$$.index)*0.9;#a<0?1+#a:1-#a}
-  .enabled=false
-  .effectPipeline=["FilterEffect.ColorFilter"]
-  .new={
-    Area.$.image="Image.Tools";
-    Area.$.x={$$.x+$$.width/2-20};
-    Area.$.width=40;
-    Area.$.y=56;
-    Area.$.height=28;
-    Area.$.boxPick=true;
-    Area.$.cursor=HAND;
-    Trigger.$_press.test={Area.$.press};
-    Trigger.$_press.exec={setZoomIndex($$.index);Scene.3d.mode=($$.index==1?_ROTATE:_MOVE)};
-  }
->>
-ZoomButton.Zoom1.index=1
-ZoomButton.Zoom1.x=145
-ZoomButton.Zoom2.index=2
-ZoomButton.Zoom2.x=185
-ZoomButton.Zoom3.index=3
-ZoomButton.Zoom3.x=226
-ZoomButton.Zoom4.index=4
-ZoomButton.Zoom4.x=267
-ZoomButton.Zoom5.index=5
-ZoomButton.Zoom5.x=308
-Image.ZoomLabel<<
-  .parent="Image.Tools"
-  .anchor=_NE
-  .x=342
-  .y=83
-  .scaleX={1/fontScale}
-  .scaleY={1/fontScale}
-  .text={"%Tool_off{"~l10n("Zoom")~"}"}
->>
-
-ResetSerial=0
-ClickOnReset={foreach(^elem="i";^in=allPlayingScripts;^do={#i->stop});Scene.3d.playInstantly(Scene.3d.runtime->getInitID());currentTip="";autoRunMode=false;ResetSerial=ResetSerial+1;}
-ClickOnMeasure={Scene.3d.mode=_MEASURE}
-ClickOnMove={Scene.3d.mode=_MOVE}
-ClickOnTurn={Scene.3d.mode=_ROTATE}
-ClickOnZoom={Scene.3d.distance=0}
-ClickOnAuto={autoRunMode=!autoRunMode;!autoRunMode?ClickOnReset()}
-ClickOnNotes={showNotes=!showNotes}
+// 
+// ZoomButton.extends="FilteredImage"
+// ZoomButton.Class<<
+//   .parent="Image.Tools"
+//   .index=1
+//   .file={"img/z"~Meson.round($$.index)~".png"}
+//   .y=60
+//   .alpha={#a=(zoomIndex-$$.index)*0.9;#a<0?1+#a:1-#a}
+//   .enabled=false
+//   .effectPipeline=["FilterEffect.ColorFilter"]
+//   .new={
+//     Area.$.image="Image.Tools";
+//     Area.$.x={$$.x+$$.width/2-20};
+//     Area.$.width=40;
+//     Area.$.y=56;
+//     Area.$.height=28;
+//     Area.$.boxPick=true;
+//     Area.$.cursor=HAND;
+//     Trigger.$_press.test={Area.$.press};
+//     Trigger.$_press.exec={setZoomIndex($$.index);Scene.3d.mode=($$.index==1?_ROTATE:_MOVE)};
+//   }
+// >>
+// ZoomButton.Zoom1.index=1
+// ZoomButton.Zoom1.x=145
+// ZoomButton.Zoom2.index=2
+// ZoomButton.Zoom2.x=185
+// ZoomButton.Zoom3.index=3
+// ZoomButton.Zoom3.x=226
+// ZoomButton.Zoom4.index=4
+// ZoomButton.Zoom4.x=267
+// ZoomButton.Zoom5.index=5
+// ZoomButton.Zoom5.x=308
+// Image.ZoomLabel<<
+//   .parent="Image.Tools"
+//   .anchor=_NE
+//   .x=342
+//   .y=83
+//   .scaleX={1/fontScale}
+//   .scaleY={1/fontScale}
+//   .text={"%Tool_off{"~l10n("Zoom")~"}"}
+// >>
+// 
+// ResetSerial=0
+// ClickOnReset={foreach(^elem="i";^in=allPlayingScripts;^do={#i->stop});Scene.3d.playInstantly(Scene.3d.runtime->getInitID());currentTip="";autoRunMode=false;ResetSerial=ResetSerial+1;}
+// ClickOnMeasure={Scene.3d.mode=_MEASURE}
+// ClickOnMove={Scene.3d.mode=_MOVE}
+// ClickOnTurn={Scene.3d.mode=_ROTATE}
+// ClickOnZoom={Scene.3d.distance=0}
+// ClickOnAuto={autoRunMode=!autoRunMode;!autoRunMode?ClickOnReset()}
+// ClickOnNotes={showNotes=!showNotes}
 
 /*___________________________________________________________*/
 /*															 */
 /*  				measurement tool						 */
 /*___________________________________________________________*/
 
-
-Image.Measure0<<
-  .file="img/measure.gif"
-  .parent="Scene.3d"
-  .layer={Scene.3d.mode==_MEASURE&Scene.3d.distance>0?1:-1}
-  .anchor=_C
-  .x={Scene.3d.pressX}
-  .y={Scene.3d.pressY}
->>
-
-Image.Measure1<<
-  .file="img/measure.gif"
-  .parent="Scene.3d"
-  .layer={Scene.3d.mode==_MEASURE&Scene.3d.distance>0?1:-1}
-  .anchor=_C
-  .x={Scene.3d.dragX}
-  .y={Scene.3d.dragY}
->>
-
-Style.Dist<<
-  .fontSize=32
-  .color="29240e"
-  .dropShadow=white
-  .lineSpacing=5
->>
-
-Image.Distance<<
-  .parent="Scene.3d"
-  .text={"%Dist{"~(Scene.3d.distance==0?l10n(Meson.touchScreen?"dragTouch":"dragMouse"):l10n("approx")~Raster.formatFloat(^value=Scene.3d.distance*Scene.3d.inch,^format=0.1)~" "~l10n("in")~"\n"~l10n("approx")~Raster.formatFloat(^value=Scene.3d.distance*Scene.3d.cm,^format=0.1)~" "~l10n("cm"))~"}"}
-  .layer={Scene.3d.mode==_MEASURE?1:-1}
-  .anchor=_S
-  .minX={Image.Distance.width/2}
-  .maxX={Scene.3d.width-Image.Distance.width/2}
-  .x={Scene.3d.distance==0?(#x=Scene.3d.width):(#x=(Image.Measure0.x+Image.Measure1.x)/2);#x<Image.Distance.minX?Image.Distance.minX:#x>Image.Distance.maxX?Image.Distance.maxX:#x}
-  .y={Scene.3d.distance==0?Scene.3d.height/2:(Image.Measure0.y+Image.Measure1.y)/2-10}
->>
+// 
+// Image.Measure0<<
+//   .file="img/measure.gif"
+//   .parent="Scene.3d"
+//   .layer={Scene.3d.mode==_MEASURE&Scene.3d.distance>0?1:-1}
+//   .anchor=_C
+//   .x={Scene.3d.pressX}
+//   .y={Scene.3d.pressY}
+// >>
+// 
+// Image.Measure1<<
+//   .file="img/measure.gif"
+//   .parent="Scene.3d"
+//   .layer={Scene.3d.mode==_MEASURE&Scene.3d.distance>0?1:-1}
+//   .anchor=_C
+//   .x={Scene.3d.dragX}
+//   .y={Scene.3d.dragY}
+// >>
+// 
+// Style.Dist<<
+//   .fontSize=32
+//   .color="29240e"
+//   .dropShadow=white
+//   .lineSpacing=5
+// >>
+// 
+// Image.Distance<<
+//   .parent="Scene.3d"
+//   .text={"%Dist{"~(Scene.3d.distance==0?l10n(Meson.touchScreen?"dragTouch":"dragMouse"):l10n("approx")~Raster.formatFloat(^value=Scene.3d.distance*Scene.3d.inch,^format=0.1)~" "~l10n("in")~"\n"~l10n("approx")~Raster.formatFloat(^value=Scene.3d.distance*Scene.3d.cm,^format=0.1)~" "~l10n("cm"))~"}"}
+//   .layer={Scene.3d.mode==_MEASURE?1:-1}
+//   .anchor=_S
+//   .minX={Image.Distance.width/2}
+//   .maxX={Scene.3d.width-Image.Distance.width/2}
+//   .x={Scene.3d.distance==0?(#x=Scene.3d.width):(#x=(Image.Measure0.x+Image.Measure1.x)/2);#x<Image.Distance.minX?Image.Distance.minX:#x>Image.Distance.maxX?Image.Distance.maxX:#x}
+//   .y={Scene.3d.distance==0?Scene.3d.height/2:(Image.Measure0.y+Image.Measure1.y)/2-10}
+// >>
 
 currentProductTitle=""
 currentProductSubTitle=""
@@ -2114,8 +2115,8 @@ I18N.Class<<
   .in="inches"
   .cm="centimeters"
   .approx="Approximately "
-  .3dHintTouch="Touch the product to interact"
-  .3dHintMouse="Click the product to interact"
+  .3dHintTouch=""//Touch the product to interact"
+  .3dHintMouse=""//Click the product to interact"
   .dragTouch="Brush your finger across the product to measure"
   .dragMouse="Click and drag your mouse\nacross the product to measure"
   .style="Normal"

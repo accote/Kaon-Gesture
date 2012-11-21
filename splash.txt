@@ -1,0 +1,41 @@
+Image.SplashPage<<
+	.buffer=white
+	.height=1080
+	.width=1920
+	.parent="Display.Primary"
+	.alpha={INTERP(^t=$$$.t, ^i=0, ^o=0.3, ^a=1, ^b=0)}
+	.t=0	
+	.layer=999999999
+>>
+
+Anim.SplashPageHide<<
+	.attr=["Image.SplashPage.t"]
+	.goal=0
+	.rate=0.25
+>>
+
+
+Trigger.HideSplashPage<<
+	.test={Display.Primary.press}
+	.exec={Anim.SplashPageHide.goal=1;
+		
+		   View.3d.fov={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.3, ^a=100, ^b=28, ^f="Easing.CUBIC_OUT")};
+		   View.3d.theta={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.3, ^a=-360, ^b=-28, ^f="Easing.CUBIC_OUT")};
+		   View.3d.desiredTheta={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.3, ^a=-360, ^b=-28, ^f="Easing.CUBIC_OUT")};
+		
+		
+		
+		
+	}
+>>
+
+Image.ControlPanel<<
+	//ALSO DEFINED IN template.txt
+	.t={Image.SplashPage.t}
+	.x={INTERP(^t=$$$.t, ^i=0.5, ^o=0.7, ^a=-400, ^b=40, ^f="Easing.OVER_OUT")}	
+	.layer=10
+>>
+
+
+
+
