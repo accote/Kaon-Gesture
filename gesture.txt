@@ -4,46 +4,33 @@ cursor1{#arg=[false, 0,0,0]}={
 	LeftHand.z=(#arg)[3];	
 }
 cursor2{#arg=[false, 0,0,0]}={	
-	rightHand.x=(#arg)[1];
-	rightHand.y=(#arg)[2];
-	rightHand.z=(#arg)[3];	
+	RightHand.x=(#arg)[1];
+	RightHand.y=(#arg)[2];
+	RightHand.z=(#arg)[3];	
 }
 
 
 
-gesture{#arg=[false, 1, 0, 0, 0]}={
+gesture{#arg=[0, 1, 0, 0, 0, 0]}={
+	
+	//displayMsg("gesture");
+	
+	
 	Gesture.isActive=(#arg)[0];
 	Gesture.scale=(#arg)[1];
 	Gesture.rotate=(#arg)[2];
-	Gesture.translateX=(#arg)[3];
-	Gesture.translateY=(#arg)[4];
+	Gesture.pitch=(#arg)[3];
+	Gesture.translateX=(#arg)[4];
+	Gesture.translateY=(#arg)[5];
 }
 
 
-// 
-// gesture{#val=[0,0,0,0,0,0]}={
-// 	LeftHand.x=(#val)[0];
-// 	LeftHand.y=(#val)[1];
-// 	LeftHand.z=(#val)[2];
-// 	RightHand.x=(#val)[3];
-// 	RightHand.y=(#val)[4];
-// 	RightHand.z=(#val)[5];
-// 	
-// 	Image.Message.text=(LeftHand.x~" "~LeftHand.y~" "~LeftHand.z~"\n"~RightHand.x~" "~RightHand.y~" "~RightHand.z);
-// 	
-// 	
-// }
-
-// HairTrigger.FollowLeftHand<<
-// 	.test={Display.Primary.mouseX, Display.Primary.mouseY}
-// 	.exec={gesture(^val=[Display.Primary.mouseX, Display.Primary.mouseY,0,0,0,0])}
-// >>
 
 LeftHand<<
 	.x=0
 	.y=0
 	.z=0
-	.t=0
+	.t=1
 >>
 
 
@@ -51,7 +38,7 @@ RightHand<<
 	.x=0
 	.y=0
 	.z=0
-	.t=0
+	.t=1
 >>
 
 Image.LeftHandCursor<<
@@ -93,17 +80,6 @@ Gesture<<
 	.translateY=0
 >>
 
-HairTrigger.GestureHair<<
-	.test={Gesture.scale; Gesture.rotate; Gesture.translateX; Gesture.translateY}
-	.exec={Gesture.isActive?(
-		   View.3d.fov={25/Gesture.scale};
-		   View.3d.desiredTheta={Gesture.rotate};
-		   View.3d.desiredCx={Gesture.translateX/(1920*2)+0.5};
-		   View.3d.desiredCy={Gesture.translateY/(1080*2)+0.5});
-	   }
->>
-
-
 
 
 
@@ -126,29 +102,29 @@ Area.Class<<
 	.rightT=0
 	
 	
-	.new= Area.Class.new + {		
-		
-		ChangeTrigger.$_LeftHover.test={$$.leftHover};
-		ChangeTrigger.$_LeftHover.exec={$$.leftHover?(Anim.$_LeftTimer.goal=0; LeftHand.t={$$.leftT}; $$.hover=true):(Anim.$_LeftTimer.goal=3; $$.press=false; $$.hover=false)};
-	
-		Anim.$_LeftTimer.goal=1.5;
-		Anim.$_LeftTimer.rate={$$.leftHover?2:999999};
-		Anim.$_LeftTimer.attr=["$$.leftT"];
-		
-		Trigger.$_LeftPress.test={$$.leftT==0};
-		Trigger.$_LeftPress.exec={$$.leftHover?$$.leftPress()};
-
-		ChangeTrigger.$_RightHover.test={$$.rightHover};
-		ChangeTrigger.$_RightHover.exec={$$.rightHover?(Anim.$_RightTimer.goal=0; RightHand.t={$$.rightT}; $$.hover=true):(Anim.$_RightTimer.goal=3; $$.press=false; $$.hover=false)};
-	
-		Anim.$_RightTimer.goal=1.5;
-		Anim.$_RightTimer.rate={$$.rightHover?2:999999};
-		Anim.$_RightTimer.attr=["$$.rightT"];
-		
-		Trigger.$_RightPress.test={$$.rightT==0};
-		Trigger.$_RightPress.exec={$$.rightHover?$$.rightPress()};
-
-	}	
+	// .new= Area.Class.new + {		
+	// 	
+	// 	ChangeTrigger.$_LeftHover.test={$$.leftHover};
+	// 	ChangeTrigger.$_LeftHover.exec={$$.leftHover?(Anim.$_LeftTimer.goal=0; LeftHand.t={$$.leftT}; $$.hover=true):(Anim.$_LeftTimer.goal=3; $$.press=false; $$.hover=false)};
+	// 
+	// 	Anim.$_LeftTimer.goal=1.5;
+	// 	Anim.$_LeftTimer.rate={$$.leftHover?2:999999};
+	// 	Anim.$_LeftTimer.attr=["$$.leftT"];
+	// 	
+	// 	Trigger.$_LeftPress.test={$$.leftT==0};
+	// 	Trigger.$_LeftPress.exec={$$.leftHover?$$.leftPress()};
+	// 
+	// 	ChangeTrigger.$_RightHover.test={$$.rightHover};
+	// 	ChangeTrigger.$_RightHover.exec={$$.rightHover?(Anim.$_RightTimer.goal=0; RightHand.t={$$.rightT}; $$.hover=true):(Anim.$_RightTimer.goal=3; $$.press=false; $$.hover=false)};
+	// 
+	// 	Anim.$_RightTimer.goal=1.5;
+	// 	Anim.$_RightTimer.rate={$$.rightHover?2:999999};
+	// 	Anim.$_RightTimer.attr=["$$.rightT"];
+	// 	
+	// 	Trigger.$_RightPress.test={$$.rightT==0};
+	// 	Trigger.$_RightPress.exec={$$.rightHover?$$.rightPress()};
+	// 
+	// }	
 >>
 
 
@@ -179,6 +155,160 @@ Image.Message2<<
 displayMsg={
 	Image.Message2.text=(#arg);	
 }
+
+
+
+
+
+
+
+
+
+// 
+// 
+// Fov<<
+// 	.in=0
+// 	.out={$$$.in+0.5}
+// 	.t={Meson.clock}
+// 	.goal=0
+// 	.temp=0
+// >>
+// 
+// setFov={Fov.temp=(View.3d.fov);
+// 		View.3d.fov=(Fov.temp);
+// 		Fov.in=(Meson.clock);
+// 		Fov.goal=(#arg);
+// 		View.3d.fov={INTERP(^t=Fov.t, ^i=Fov.in, ^o=Fov.out, ^a=Fov.temp, ^b=Fov.goal, ^f="Easing.CUBIC_BOTH")};}
+// 
+
+
+
+//we should increment View.3d.fov for every tick that our scale is 1.25, and decriment it for every tick that our scale is 0.75
+setFov={
+	Gesture.scale==1.25 & View.3d.fov > 45 ?View.3d.fov=(View.3d.fov-0.2);
+	Gesture.scale==0.75 & View.3d.fov < 13 ?View.3d.fov=(View.3d.fov+0.2);	
+}
+
+
+
+//_________________________________________________________________________________________________________________________________________________________
+//_________________________________________________________________________________________________________________________________________________________
+//___________________________________________okay so we're going to try to define these gestures using the cursors_________________________________________
+//_________________________________________________________________________________________________________________________________________________________
+//_________________________________________________________________________________________________________________________________________________________
+
+HairTrigger.GestureHair<<
+	.test={Gesture.scale; Gesture.rotate; Gesture.translateX; Gesture.translateY}
+	.exec={
+			displayMsg("scale: "~Gesture.scale~"\nrotate:"~Gesture.rotate~"\ntranslateX:"~Gesture.translateX~"\ntranslateY:"~Gesture.translateY);
+		
+		
+
+			View.3d.desiredTheta=(Gesture.rotate/100*-180);
+			setFov();
+			//setFov((Gesture.scale-0.75)*-80 + 48);
+			//View.3d.fov=(Gesture.scale-0.75)*-80 + 48;
+			View.3d.desiredCx=(Gesture.translateX/400)+0.5;
+			View.3d.desiredCy=(Gesture.translateY/400)+0.5+0.5;
+
+
+
+			 // (Gesture.rotate>40 | Gesture.rotate< -40)?(View.3d.desiredTheta=(Gesture.rotate/100*180);)
+			 // 		     :((Gesture.scale>1.1 | Gesture.scale<0.9)?(View.3d.fov=(Gesture.scale-0.75)*-80 + 48;)
+			 // 		     :((Gesture.translateX > 20 | Gesture.translateX < -20)?(View.3d.desiredCx=(Gesture.translateX/400);)
+			 // :(Gesture.translateY > 20 | Gesture.translateY < -20)?(View.3d.desiredCy=(Gesture.translateY/-400);)))
+		
+		
+		// 	Gesture.isActive?(
+		//    View.3d.fov={25/Gesture.scale};
+		//    View.3d.desiredTheta={Gesture.rotate};
+		//    View.3d.desiredCx={Gesture.translateX/(1920*2)+0.5};
+		//    View.3d.desiredCy={Gesture.translateY/(1080*2)+0.5};
+		// 
+		// );
+	   }
+>>
+
+
+
+
+
+
+
+
+PastCoords<<
+	.1x=[0,0,0,0]
+	.1y=[0,0,0,0]
+	.1z=[0,0,0,0]
+	.rx=[0,0,0,0]
+	.ry=[0,0,0,0]
+	.rz=[0,0,0,0]
+>>
+
+// HairTrigger.CursorHair<<
+// 	.test={LeftHand.x; LeftHand.y; LeftHand.z; RightHand.x; RightHand.y; RightHand.z}
+// 	.exec={
+// 		Image.Message.text=(LeftHand.x~" "~LeftHand.y~" "~LeftHand.z~"\n"~RightHand.x~" "~RightHand.y~" "~RightHand.z);
+// 		
+//    		PastCoords.lx=[PastCoords.lx[1],PastCoords.lx[2],PastCoords.lx[3],LeftHand.x];
+//    		PastCoords.ly=[PastCoords.ly[1],PastCoords.ly[2],PastCoords.ly[3],LeftHand.y];
+//    		PastCoords.lz=[PastCoords.lz[1],PastCoords.lz[2],PastCoords.lz[3],LeftHand.z];
+// 		PastCoords.rx=[PastCoords.rx[1],PastCoords.rx[2],PastCoords.rx[3],RightHand.x];
+//    		PastCoords.ry=[PastCoords.ry[1],PastCoords.ry[2],PastCoords.ry[3],RightHand.y];
+//    		PastCoords.rz=[PastCoords.rz[1],PastCoords.rz[2],PastCoords.rz[3],RightHand.z];
+// 
+// 		//yeah. updated all the past coords.
+// 		//now check to see if we have a useful gesture on our hands. 
+// 		//lol. get it. hands.
+// 
+// 
+// 		(PastCoords.ly[0]>1080&PastCoords.ly[1]>1080&PastCoords.ly[2]>1080&PastCoords.ly[3]>1080&
+// 		 PastCoords.ry[0]>1080&PastCoords.ry[1]>1080&PastCoords.ry[2]>1080&PastCoords.ry[3]>1080?
+// 		
+// 		//rotate: check if one z has been significantly greater than the other for all 8 ticks
+// 		( foreach(^elem="i", ^in=PastCoords.lz, ^do={
+// 				((#i>PastCoords.rz[0]+10)&(#i>PastCoords.rz[1]+10)&(#i>PastCoords.rz[2]+10)&(#i>PastCoords.rz[3]+10)?
+// 					gesture([true, Gesture.scale, LeftHand.z-RightHand.z, Gesture.translateX, Gesture.translateY]) 
+// 					:(foreach(^elem="i", ^in=PastCoords.rz, ^do={
+// 							((#i>PastCoords.lz[0]+10)&(#i>PastCoords.lz[1]+10)&(#i>PastCoords.lz[2]+10)&(#i>PastCoords.lz[3]+10)?
+// 								gesture([true, Gesture.scale, RightHand.z-LeftHand.z, Gesture.translateX, Gesture.translateY]))})))				
+// 			});
+// 			displayMsg("rotate");		
+// 		):		
+// 		//zoom: check if one hand x has moved significanlty away from the other hand x for all 8 ticks and not rotate
+// 		(
+// 			PastCoords.lx[3]<(PastCoords.lx[0]-50) & PastCoords.rx[3]>(PastCoords.rx[0]+50) ?
+// 			gesture([true, Gesture.scale+((RightHand.x-960)/960), Gesture.rotate, Gresture.translateX, Gesture.translateY]);
+// 			displayMsg("zoom");
+// 		):
+// 		//pan: if both hands are in a similar x for all 8 ticks and not rotate and not zoom
+// 		(
+// 			gesture([true, Gesture.scale, Gesture.rotate, Gesture.translateX+(RightHand.x-960), Gesture.translateY+(RightHand.y-540)]);
+// 			displayMsg("pan");			
+// 		)
+// 		)
+// 		
+// 	}
+// >>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

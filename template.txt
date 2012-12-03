@@ -1621,8 +1621,12 @@ Anim.HSIAlpha<<
 // Image.Notes_lbl.alpha={hasHotSpots?1:0.2}
 // Image.Notes_lbl.text={"%Tool_#{"~(showNotes?l10n("NoNotes"):l10n("Notes"))~"}"};
 // 
-// zoomIndex={#f=(View.3d.maxFOV-View.3d.minFOV);#f==0?1:1+4*(View.3d.maxFOV-View.3d.fov)/#f}
+//zoomIndex={#f=(View.3d.maxFOV-View.3d.minFOV);#f==0?1:1+4*(View.3d.maxFOV-View.3d.fov)/#f}
 setZoomIndex={#a=(#arg-1)/4;View.3d.setDesiredFov(#a*View.3d.minFOV + (1-#a)*View.3d.maxFOV)}
+
+
+
+
 // 
 // FilterEffect.ColorFilter<<
 //   .color={colorTheme}

@@ -36,6 +36,3 @@ Image.ControlPanel<<
 	.layer=10
 >>
 
-
-
-
