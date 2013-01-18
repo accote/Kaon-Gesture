@@ -1,7 +1,11 @@
+// Image.Background<<
+// 	.parent="Display.Primary"
+// 	.layer=0
+// 	.file="img/bg.png"
+// >>
+
 Image.SplashPage<<
-	.buffer=white
-	.height=1080
-	.width=1920
+	.file="img/bg.png"
 	.parent="Display.Primary"
 	.alpha={INTERP(^t=$$$.t, ^i=0, ^o=0.3, ^a=1, ^b=0)}
 	.t=0	
@@ -15,13 +19,43 @@ Anim.SplashPageHide<<
 >>
 
 
+// View.3d.maxFOV=210
+// View.3d.setDesiredFov(100)
+// Trigger.SetMaxFOV<<
+// 	.test={View.3d.maxFOV!=210 & Image.SplashPage.t<0.4};
+// 	.exec={View.3d.maxFOV=210; View.3d.setDesiredFov(100)};
+// >>
+
+View.3d.tempFov=28
+View.3d.smooth=0.001
+
+Trigger.ResetMaxFOV<<
+	.test={Image.SplashPage.t>0.4};
+	.exec={View.3d.maxFOV=28.000099182128906;};
+>>
+
+Trigger.HideSplashPageFadeTrigger<<
+	.test={LeftHand.z>0&RightHand.z>0 & RightHand.z<1 & LeftHand.z<1}//Bubble.following>6}
+	.exec={Image.SplashPageFade.hide()}
+>>
+
 Trigger.HideSplashPage<<
-	.test={Display.Primary.press}
+	.test={Display.Primary.press | ((LeftHand.circled | RightHand.circled) & Image.SplashPageFade.t==0)}
 	.exec={Anim.SplashPageHide.goal=1;
+		   Image.SplashPageFade.hide();
 		
-		   View.3d.fov={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.3, ^a=100, ^b=28, ^f="Easing.CUBIC_OUT")};
-		   View.3d.theta={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.3, ^a=-360, ^b=-28, ^f="Easing.CUBIC_OUT")};
-		   View.3d.desiredTheta={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.3, ^a=-360, ^b=-28, ^f="Easing.CUBIC_OUT")};
+		   //View.3d.fov={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.3, ^a=100, ^b=28, ^f="Easing.CUBIC_OUT")};
+		   //View.3d.theta={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.3, ^a=-360, ^b=-28, ^f="Easing.CUBIC_OUT")};
+		   //View.3d.desiredTheta={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.3, ^a=-360, ^b=-28, ^f="Easing.CUBIC_OUT")};
+		
+		   //View.3d.setDesiredFov(28);
+		   
+		
+		   //View.3d.tempFov={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.1, ^a=100, ^b=28, ^f="Easing.CUBIC_OUT")};
+		   //View.3d.theta={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.4, ^a=-360, ^b=-28, ^f="Easing.CUBIC_OUT")};
+		  
+		
+		   //View.3d.desiredTheta={INTERP(^t=Image.SplashPage.t, ^i=0, ^o=0.4, ^a=-360, ^b=-28, ^f="Easing.CUBIC_OUT")};
 		
 		
 		
@@ -33,6 +67,653 @@ Image.ControlPanel<<
 	//ALSO DEFINED IN template.txt
 	.t={Image.SplashPage.t}
 	.x={INTERP(^t=$$$.t, ^i=0.5, ^o=0.7, ^a=-400, ^b=40, ^f="Easing.OVER_OUT")}	
-	.layer=10
+
+	//.layer=10
+	.layer=-1
 >>
+
+
+
+Meson<<	
+	.randMethod = Meson.getMethod(
+        ^class  = "java.lang.Math",
+        ^method = "random",
+        ^args   = [],
+    )
+    .rand = {
+        Meson.callMethod( ^method = Meson.randMethod, ^args = [] )
+    }
+>>
+
+
+
+Image.SplashPageFade<<
+	.parent="Image.SplashPage"
+	.height=1080
+	.width=1920	
+	.alpha={$$$.t}
+	.t=1
+	.hide={Anim.HideSplashPageFade.goal=0; Timer.ShowSplashPageFade.start()}
+	.show={Anim.HideSplashPageFade.goal=1;}
+>>
+Anim.HideSplashPageFade<<
+	.attr=["Image.SplashPageFade.t"]
+	.goal=1
+	.rate=1
+>>
+
+Timer.ShowSplashPageFade<<
+	.delay=30
+	.exec={Image.SplashPage.alpha==1?Anim.HideSplashPageFade.goal=1}
+>>
+
+Image.SplashPageCenter<<
+	.parent="Image.SplashPage"
+	.t={Image.SplashPageFade.t}
+	.x={INTERP(^t=$$$.t, ^i=0, ^o=1, ^a=-30, ^b=0, ^f="Easing.CUBIC_BOTH")}
+	.height=1080
+	.width=1920
+>>
+
+Trigger.ResetSplashPage<<
+	.test={(LeftHand.z<-2 & RightHand.z<-2) | (!LeftHand.read)|(!RightHand.read)}
+	.exec={Image.SplashPageFade.show(); Anim.SplashPageHide.goal=0; displayMsg3("reset "~ Meson.rand()); AnimItem.current=""; ClickOnReset(); View.3d.desiredPhi=0}
+>>
+//This doesn't work, why not?
+
+
+
+Image.SplashPageHandBloop<<
+	.parent="Image.SplashPageCenter"
+	.active={Image.SplashPageFade.t==0}
+	.scaleIn={Easing.ELASTIC(^t=$$$.t, ^o=1)}
+	.scaleOut={Easing.OVER_OUT(^t=$$$.t, ^s=2)}
+	.t=0
+	.scale={$$$.active?$$$.scaleIn:$$$.scaleOut}
+	.scaleX={$$$.scale}
+	.scaleY={$$$.scale}
+	.file="img/HandPrompt.png"
+	.anchor=_C
+	.x=990
+	.y=540
+	.layer=30
+>>
+Anim.SplashHandBloopAnim<<
+	.attr=["Image.SplashPageHandBloop.t"]
+	.rate=1.5
+	.goal={Image.SplashPageHandBloop.active?1:0}
+>>
+Image.SpinArrows<<
+	.angle={Meson.clock*90}
+	.parent="Image.SplashPageHandBloop"
+	.anchor=_C
+	.x=157
+	.y=85
+	.subpixelPosition=true
+	.file="img/spinArrows.png"
+>>
+
+Image.MessageArea<<
+	.x=278
+	.y=448
+	.width=420
+	.height=102
+	.right={$$$.x+$$$.width}
+	.left={$$$.x}
+	.top={$$$.y}
+	.bottom={$$$.y+$$$.height}
+>>
+
+
+Bubble.extends="Image"
+Bubble.seekT={Meson.sin(Meson.clock/4)*Image.SplashPageFade.t}
+Bubble.count=0
+//Bubble.following=0
+Bubble.Class<<
+	.anchor=_C
+	.parent="Image.SplashPageFade"
+	.x={$$.wanderX+$$.seekX}
+	.y={$$.wanderY+$$.seekY}
+	.incX=0
+	.incY=0
+	.goalX={($$.wanderX+$$.incX)}
+	.goalY={($$.wanderY+$$.incY)}
+	.count=0
+	.turnNow={Meson.floor($$.count/4)==($$.count/4)}
+	.changeFade={Meson.floor($$.count/4)==($$.count/4)}
+	.file="img/bubble6.png"
+	.layer=1
+	.radius={$$.width/2}
+	.avoidMessage={($$.goalY+$$.radius<Image.MessageArea.top |
+	 	   		   $$.goalY-$$.radius>Image.MessageArea.bottom |
+	 	   		   $$.goalX+$$.radius<Image.MessageArea.left |
+	 	   		   $$.goalX-$$.radius>Image.MessageArea.right)}
+	.valid={$$.goalY<1080&$$.goalY>0&$$.goalX>0&$$.goalX<1920&$$.avoidMessage}
+	.tickRate=6	
+	.randX=0
+	.randY=0
+	.alpha=0.8
+	.scale={$$.seekScale}
+	.scaleX={$$.scale}
+	.scaleY={$$.scale}
+	.goalRandX={$$.incX+$$.randX};
+	.goalRandY={$$.incY+$$.randY};	
+	
+	.wanderX=0
+	.wanderY=0
+	
+	
+	
+	.seekXGoal=1119
+	.seekYGoal=553
+	.seekScaleGoal={12/$$.width}
+
+	.offset=0
+
+
+	.seekXTrueGoal={0-$$.wanderX+$$.seekXGoal}
+	.seekYTrueGoal={0-$$.wanderY+$$.seekYGoal}
+	.seekX={INTERP(^t=$$.seekT, ^i=0.7, ^o=0.9, ^a=0, ^b=$$.seekXTrueGoal, ^f="Easing.CUBIC_BOTH")}
+	.seekY={INTERP(^t=$$.seekT, ^i=0.7, ^o=0.9, ^a=0, ^b=$$.seekYTrueGoal, ^f="Easing.CUBIC_BOTH")}
+	.seekScale={INTERP(^t=$$.seekT, ^i=0.7, ^o=0.9, ^a=1, ^b=$$.seekScaleGoal, ^f="Easing.CUBIC_BOTH")}
+	
+	.seekT={Bubble.seekT+$$.offset*0.003}
+	
+	.flockT=0
+	
+	
+	
+	//.subpixelPosition=true
+	.new={	
+		
+		$$.wanderX=(Meson.rand()*1820 + 50);
+		$$.wanderY=(Meson.rand()*980 + 50);
+		
+		$$.wanderY>280&$$.wanderY<796&$$.wanderX<978?$$.wanderX=(Meson.rand()*842 + 978);
+		
+		//$$.alpha=(Meson.rand()*0.3+0.6);
+		//$$.scale=(Meson.rand()*0.2+0.8);
+		
+		Ticker.$_Tick.exec={($$.valid?($$.wanderX=($$.wanderX+$$.incX);
+									   $$.wanderY=($$.wanderY+$$.incY);
+										):
+											($$.reverseX=$$.incX*-1;
+											 $$.reverseY=$$.incY*-1;
+										
+										   
+											 $$.turn()));
+							
+							$$.turnNow?($$.turn());
+							$$.count=($$.count+1);
+							};
+							
+							
+		
+		Anim.$_Reverse.attr=["$$.incX", "$$.incY"];
+		Anim.$_Reverse.goal=[{$$.reverseX}, {$$.reverseY}];
+		Anim.$_Reverse.rate=10;
+		Anim.$_Reverse.enabled={!$$.valid};
+		
+		
+		
+		// Anim.$_Fade.attr=["$$.alpha"];
+		// Anim.$_Fade.goal=(Meson.rand()*0.3+0.6);
+		// Anim.$_Fade.rate=1;
+		// 
+		// Anim.$_Grow.attr=["$$.scale"];
+		// Anim.$_Grow.goal=(Meson.rand()*0.3+0.6);
+		// Anim.$_Grow.rate=1;
+		
+		
+		$$.offset=(Bubble.count); 
+		Bubble.count=(Bubble.count)+1;		
+		
+		// Area.$_Area.image="$$";
+		// Area.$_Area.x={$$.width/4};
+		// Area.$_Area.y={$$.height/4};
+		// Area.$_Area.width={$$.width/2};
+		// Area.$_Area.height={$$.height/2};
+		// Area.$_Area.hoverX=-1;
+		// Area.$_Area.hoverY=-1;
+		// 
+		// Trigger.$_CursorOver.test={Area.$_Area.hover};//we've been moused over, but by who?
+		// Trigger.$_CursorOver.exec={Bubble.following=Bubble.following+1;
+		// 						   Area.$_Area.hoverX=($$.x);
+		// 						   Area.$_Area.hoverY=($$.y);
+		// 						   $$.x={INTERP(^t=$$.flockT, ^i=0, ^o=1, ^a=Area.$_Area.hoverX, ^b={Area.$_Area.picker->x}, ^f="Easing.CUBIC_BOTH")};
+		// 						   $$.y={INTERP(^t=$$.flockT, ^i=0, ^o=1, ^a=Area.$_Area.hoverY, ^b={Area.$_Area.picker->y}, ^f="Easing.CUBIC_BOTH")}};//flock to the cursor!
+		// 
+		// Anim.$_Flock.attr=["$$.flockT"];
+		// Anim.$_Flock.rate=1;
+		// Anim.$_Flock.goal={Area.$_Area.hoverX>-1?1:0};
+		
+	}
+	.turn={
+		$$.randX=(Meson.rand()*$$.tickRate-($$.tickRate/2))*(Meson.frameStep/0.2);
+   	    $$.randY=(Meson.rand()*0.7-(0.7/2))*(Meson.frameStep/0.2);
+
+		$$.goalRandX<=1&$$.goalRandX>=-1?($$.incX=$$.incX+$$.randX : $$.incX=$$.incX-$$.randX );
+		$$.goalRandY<=1&$$.goalRandY>=-1?($$.incY=$$.incY+$$.randY : $$.incY=$$.incY-$$.randY );
+		
+		//$$.changeFade?(Anim.$_Fade.goal=(Meson.rand()*0.3+0.6);
+		//			   Anim.$_Grow.goal=(Meson.rand()*0.2+0.8));
+	}
+>>
+
+
+
+// StepWanderSeek.extends=["StepStrand"]
+// StepWanderSeek.Class<<
+// 	.bead=""
+// 	.bubble=""
+// 	.in1=0
+// 	.in2=0
+// 	.driftT={INTERP(^t=$$.t, ^i=$$.in1, ^o=$$.in1+1.5, ^a=0, ^b=0.5,)+INTERP(^t=$$.t, ^i=$$.in2, ^o=$$.in2+1, ^a=0, ^b=0.5,)}
+// 	.shiftX={INTERP(^t=$$.driftT, ^a=$$.bubble->width/2, ^b=$$.bead->width/2)}
+// 	.shiftY={INTERP(^t=$$.driftT, ^a=$$.bubble->height/2, ^b=$$.bead->height/2)}
+// 	.x={INTERP(^t=$$.driftT, ^a=$$.bubble->x, ^b=$$.bead->x)+$$.shiftX}
+// 	.y={INTERP(^t=$$.driftT, ^a=$$.bubble->y, ^b=$$.bead->y)+$$.shiftY}
+// 	.new={$$.in1=Meson.rand()*1+1;
+// 		  $$.in2={Meson.rand()*2+$$.in1};}
+// >>
+
+CenterBubble.extends="Bubble"
+CenterBubble.Class<<
+	.parent="Image.SplashPageCenter"
+	.source=[990,540]
+	.radius=150
+	.valid={$$.goalY<$$.source[1]+$$.radius&$$.goalY>$$.source[1]-$$.radius&
+			$$.goalX>$$.source[0]-$$.radius&$$.goalX<$$.source[0]+$$.radius&
+			$$.avoidMessage}
+	.new={		
+		$$.wanderX=(Meson.rand()*($$.radius) + $$.source[0]-$$.radius+$$.radius*0.5);
+		$$.wanderY=(Meson.rand()*($$.radius) + $$.source[1]-$$.radius+$$.radius*0.5);
+	}
+>>
+
+CenterBubble.Bubble1.file="img/bubble1.png";
+CenterBubble.Bubble2.file="img/bubble2.png";
+CenterBubble.Bubble3.file="img/bubble3.png";
+CenterBubble.Bubble4.file="img/bubble4.png";
+CenterBubble.Bubble5.file="img/bubble5.png";
+
+//cursor bubbles, in progress..
+
+CursorBubble.extends="CenterBubble"
+CursorBubble.Class<<
+	.parent={Image.SplashPageHandBloop.active?"Display.Primary"}
+	.layer={Image.SplashPageHandBloop.scaleX==0?900:1}
+	.alpha={(1-Image.SplashPageFade.alpha)*1}	
+	.hoverX=-1
+	.hoverY=-1	
+	.z={INTERP(^t=$$.picker->z, ^i=0.1, ^o=1, ^a=0.5, ^b=0.1)}
+	
+	.new={
+		 Trigger.$_Cursor.test={Anim.SplashPageHide.goal==1;};//we've been moused over, but by who?
+		 Trigger.$_Cursor.exec={$$.hoverX=($$.x);
+		 						$$.hoverY=($$.y);
+		 						$$.x={INTERP(^t=$$.flockT, ^i=0, ^o=1, ^a=$$.hoverX, ^b={$$.picker->x}, ^f="Easing.CUBIC_BOTH")};
+		 						$$.y={INTERP(^t=$$.flockT, ^i=0, ^o=1, ^a=$$.hoverY, ^b={$$.picker->y}, ^f="Easing.CUBIC_BOTH")};
+								$$.scaleX={INTERP(^t=$$.flockT, ^i=0, ^o=1, ^a=1, ^b={$$.z*0.5}, ^f="Easing.CUBIC_BOTH")};
+								$$.scaleY={INTERP(^t=$$.flockT, ^i=0, ^o=1, ^a=1, ^b={$$.z*0.5}, ^f="Easing.CUBIC_BOTH")};
+								$$.alpha={INTERP(^t=$$.flockT, ^i=0, ^o=1, ^a=1, ^b=1, ^f="Easing.CUBIC_BOTH")};
+								};//flock to the cursor!
+		 
+		 Anim.$_Flock.attr=["$$.flockT"];
+		 Anim.$_Flock.rate=1;
+		 Anim.$_Flock.goal={$$.hoverX>-1?1:0};
+		
+		Trigger.$_Reset.test={Image.SplashPageFade.alpha>0};
+		Trigger.$_Reset.exec={$$.x={$$.wanderX+$$.seekX};
+							  $$.y={$$.wanderY+$$.seekY}};
+	}	
+>>
+
+CursorBubble.BubbleHand1.picker="LeftHand"
+CursorBubble.BubbleHand2.picker="LeftHand"
+CursorBubble.BubbleHand3.picker="RightHand"
+CursorBubble.BubbleHand4.picker="RightHand"
+
+Bubble.Bubble6<<
+	.file="img/bubble6.png";
+	.seekXGoal=1074
+	.seekYGoal=506
+>>
+
+Bubble.Bubble7<<
+	.file="img/bubble7.png";
+	.seekXGoal=1096
+	.seekYGoal=506
+>>
+
+Bubble.Bubble8<<
+	.file="img/bubble8.png";
+	.seekXGoal=1118
+	.seekYGoal=506
+>>
+
+Bubble.Bubble9<<
+	.file="img/bubble9.png";
+	.seekXGoal=1142
+	.seekYGoal=506
+>>
+
+Bubble.Bubble10<<
+	.file="img/bubble1.png";
+	.seekXGoal=1074
+	.seekYGoal=529
+>>
+
+Bubble.Bubble11<<
+	.file="img/bubble2.png";
+	.seekXGoal=1096
+	.seekYGoal=529
+>>
+
+Bubble.Bubble12<<
+	.file="img/bubble3.png";
+	.seekXGoal=1118
+	.seekYGoal=529
+>>
+
+Bubble.Bubble13<<
+	.file="img/bubble4.png";
+	.seekXGoal=1142
+	.seekYGoal=529
+>>
+
+Bubble.Bubble14<<
+	.file="img/bubble5.png";
+	.seekXGoal=1074
+	.seekYGoal=552
+>>
+
+Bubble.Bubble15<<
+	.file="img/bubble6.png";
+	.seekXGoal=1095
+	.seekYGoal=552
+>>
+
+Bubble.Bubble16<<
+	.file="img/bubble7.png";
+	.seekXGoal=1142
+	.seekYGoal=552
+>>
+
+Bubble.Bubble17<<
+	.file="img/bubble8.png";
+	.seekXGoal=1074
+	.seekYGoal=576
+>>
+
+Bubble.Bubble18<<
+	.file="img/bubble9.png";
+	.seekXGoal=1096
+	.seekYGoal=576
+>>
+
+Bubble.Bubble19<<
+	.file="img/bubble1.png";
+	.seekXGoal=1118
+	.seekYGoal=576
+>>
+
+Bubble.Bubble20<<
+	.file="img/bubble2.png";
+	.seekXGoal=1142
+	.seekYGoal=576
+>>
+
+
+Image.SideText1 <<
+	.parent		= "Image.SplashPageFade"
+    .file       = "img/sidetext1.png"
+    .anchor     = _E
+    .x          = 691
+    .y          = 501
+	.layer		= 20
+	.alpha={1-Image.Kaonlogo.alpha}
+>>
+
+CycleText.extends="Image"
+CycleText.count=0
+CycleText.Class<<
+	.parent = "Image.SplashPageFade"	
+	.alpha={INTERP(^t=$$.t, ^i=0+$$.offset, ^o=0.075+$$.offset, ^a=0, ^b=1, ^f="Easing.CUBIC_BOTH")-
+			INTERP(^t=$$.t, ^i=0.9+$$.offset, ^o=1+$$.offset, ^a=0, ^b=1, ^f="Easing.CUBIC_BOTH")-Image.Kaonlogo.alpha}//multiply by offset?
+	.x={INTERP(^t=$$.t, ^i=0+$$.offset, ^o=0.1+$$.offset, ^a=0, ^b=691, ^f="Easing.CUBIC_OUT")}//multiply by offset?
+	.y=535
+	.layer=20
+	.anchor=_E
+	.t={(Meson.clock/(6*CycleText.count)-Meson.floor(Meson.clock/(6*CycleText.count)))*CycleText.count}
+	.offset=0
+	.new={$$.offset=CycleText.count;
+		  CycleText.count=(CycleText.count)+1;}
+>>
+
+CycleText.SideText2.file = "img/sidetext2.png"
+CycleText.SideText3.file = "img/sidetext3.png"
+
+Image.Kaonlogo <<
+	.parent     = "Image.SplashPageFade"
+    .file       = "img/Kaonlogo.png"
+    .anchor     = _C
+    .x          = 959
+    .y          = 540
+	.alpha		= {INTERP(^t=Bubble.seekT, ^i=0.7, ^o=0.8, ^a=0, ^b=1, ^f="Easing.CUBIC_BOTH")}
+>>
+
+Image.KaonSquare<<
+	.parent     = "Image.SplashPageFade"
+	.file       = "img/KaonSquare.png"
+	.anchor     = _C
+	.x          = 959
+	.y          = 540
+	.alpha		= {INTERP(^t=Bubble.seekT, ^i=0.9, ^o=1, ^a=0, ^b=1, ^f="Easing.CUBIC_BOTH")}	
+	.layer=30
+>>
+
+Image.Bringingyourproducts <<
+	.parent     = "Image.SplashPageFade"	
+    .file       = "img/bringingyourproducts.png"
+    .anchor     = _C
+    .x          = 959
+    .y          = 764
+	.alpha		= {$$$.swapAlphas?Image.Tolife.alpha:INTERP(^t=Bubble.seekT, ^i=0.9, ^o=0.95, ^a=0, ^b=1, ^f="Easing.CUBIC_BOTH")}
+>>
+Image.Tolife <<
+ 	.parent     = "Image.SplashPageFade"
+    .file       = "img/tolife.png"
+    .anchor     = _C
+    .x          = 959
+    .y          = 764
+	.swapAlphas = false
+	.alpha		= {$$$.swapAlphas?Image.Bringingyourproducts.alpha:INTERP(^t=Bubble.seekT, ^i=0.95, ^o=1, ^a=0, ^b=1, ^f="Easing.CUBIC_BOTH")}
+>>
+
+Trigger.FadeToLife<<
+	.test={Image.Tolife.alpha==1|Image.Tolife.alpha==0}
+	.exec={Image.Tolife.swapAlphas=(!(Image.Tolife.swapAlphas))}
+>>
+
+
+
+//__________________________________________________________________________________________________________________________________________
+//______________________________________________________________new animations menu_________________________________________________________
+//__________________________________________________________________________________________________________________________________________
+
+
+//uh how do we embed a font here?
+Style.Vag<<
+	.fontFamily=["Vag"]
+	.fontSize=21
+	.color=white
+>>
+
+Image.AnimItems<<
+	.parent="Display.Primary"
+	.layer=99999999
+	.anchor=_E
+	.x=1920
+	.y=540
+	.members=[]
+	.count=0
+	.height={$$$.count>0?$$$.members[$$$.count-1]->bottom:0}
+	.t={Easing.QUAD_OUT(^t=Image.SplashPage.t*1.2)}
+	.addMember={
+		
+		(#arg)->parent="$$$";
+		(#arg)->index=$$$.count;
+		($$$.count>0?(#arg)->sibling=$$$.members[$$$.count-1]);
+
+		$$$.members=$$$.members++[#arg];
+		$$$.count=($$$.count+1);		
+	}
+>>
+
+AnimItem.extends="Image"
+AnimItem.current=""
+AnimItem.Class<<
+	.buffer="efa622"
+	.height=61
+	.easing={"Easing.CUBIC_BOTH"}//{$$.hover?"Easing.CUBIC_IN":"Easing.CUBIC_OUT"}
+	//whatever, deal with this later.
+	.width={INTERP(^t=$$.t, ^i=0, ^o=1, ^a=Image.$_Title.width+100, ^b=Image.$_Title.width+200, ^f="Easing.CUBIC_BOTH")+
+			INTERP(^t=$$.t, ^i=1, ^o=2, ^a=0, ^b=100, ^f="Easing.CUBIC_OUT")-INTERP(^t=$$.t, ^i=3, ^o=4, ^a=0, ^b=200, ^f="Easing.CUBIC_OUT")}
+	.hover={(RightHand.isActive & !Hands.close & RightHand.y>$$.absY & RightHand.y<($$.absHeight+$$.absY) & RightHand.pan & RightHand.x>950 & Image.SplashPage.alpha==0)|
+	 		Area.$_Area.hover}	
+	.anchor=_E
+	.y={$$.sibling==""?0:$$.sibling->bottom+9}
+	.label="$"
+	.bottom={$$.y+$$.height}
+	.arrowFile={"img/anim_arrow.png"}
+	.exec=""
+	.engage={AnimItem.current="$$"; $$.exec()}
+	.active={AnimItem.current=="$$"}
+	.t=0
+	.index=0
+	.in={($$.index/$$.parent->count-(1/$$.parent->count)*0.9)*0.5+0.5}
+	.out={$$.in+0.5/$$.parent->count}
+	.x={INTERP(^t=$$.parent->t, ^i=$$.in, ^o=$$.out, ^a=$$.width, ^b=0, ^f="Easing.QUAD_OUT")+INTERP(^t=$$.hideT, ^i=0, ^o=1, ^a=0, ^b=$$.width, ^f="Easing.QUAD_OUT")}
+				//we want the active man to slide out, and then after sliding out, slide back in. another, seperate moment of motion.
+	.armed={$$.t>=0.5 & !$$.active}
+	.hideT=0
+	.new={
+		Area.$_Area.image="$$";
+		Area.$_Area.boxPick=true;
+		
+		Image.$_Arrow.parent="$$";
+		Image.$_Arrow.anchor=_W;
+		Image.$_Arrow.x=14;
+		Image.$_Arrow.y={$$.height/2};
+		Image.$_Arrow.dataSource=Meson.documentBase;
+		Image.$_Arrow.file={$$.arrowFile};
+		
+		Image.$_Title.parent="$$";
+		Image.$_Title.text={"%Vag{"~$$.label~"}"};
+		Image.$_Title.anchor=_W;
+		Image.$_Title.x=51;
+		Image.$_Title.y={$$.height/2};
+		
+		Anim.$_Anim.attr=["$$.t"];
+		Anim.$_Anim.rate=6;//{$$.active|$$.hover?6:12};
+		Anim.$_Anim.goal={$$.active?4:$$.hover?1:0};
+
+		Anim.$_AnimHide.attr=["$$.hideT"];
+		Anim.$_AnimHide.rate=6;
+		Anim.$_AnimHide.goal={AnimItem.current!=""&!$$.active?1:0};
+
+		// Anim.$_AnimActive.attr=["$$.activeT"];
+		// Anim.$_AnimActive.rate=6;
+		// Anim.$_AnimActive.goal={AnimItem.current!=""&$$.active?2:0};
+
+		ChangeTrigger.$_Hover.test={$$.hover};
+		ChangeTrigger.$_Hover.exec={$$.hover?Timer.$_Timer.start():Timer.$_Timer.stop()};
+
+		Timer.$_Timer.delay=3;
+		//Timer.$_Timer.exec={$$.hover?$$.exec()};
+		
+		Trigger.$_Swiped.test={($$.armed&RightHand.swiped)|Area.$_Area.press}; 		//need a better mechanism,
+																//you should be able to swipe vertically without disengaging this....
+																//need a sense of selected. that's not quite what hover is.
+																//it'll be selected when we're over it and start swiping.
+		Trigger.$_Swiped.exec={Timer.$_Timer.stop(); $$.engage()};
+		
+		Image.AnimItems.addMember("$$");
+		
+		
+	}
+>>
+
+
+Trigger.ResetActiveAnimItem<<
+	.test={allPlayingScripts==[]}
+	.exec={AnimItem.current=""}
+>>
+
+//AnimItem.Test.label="Test"
+
+
+
+Image.HomeButton<<
+	.parent="Display.Primary"
+	.scale={Easing.OVER_OUT(^t=$$$.t)}
+	.scaleX=1//{$$$.scale}
+	.scaleY=1//{$$$.scale}
+	.alpha={$$$.scale}
+	.x=99
+	.y=557
+	.anchor=_C
+	.file="img/homeButton.png"	
+	.t={INTERP(^t=Image.SplashPage.t)-Meson.sin($$$.bounceT)*0.25}
+	.bounceT=0
+	.layer=9000
+>>
+
+Anim.HomeButtonBounce<<
+	.attr=["Image.HomeButton.bounceT"]
+	.goal={Area.HomeButton.hover?3.141592:0}
+	.rate=7
+>>
+Area.HomeButton<<
+	.image="Image.HomeButton"
+	.hover={RightHand.x<350}
+	.hoverStart={Meson.clock}
+	.hoverT={Meson.clock-$$$.hoverStart}
+>>
+ChangeTrigger.HomeButtonHover<<
+	.test={Area.HomeButton.hover}
+	.exec={Area.HomeButton.hover?Area.HomeButton.hoverStart=(Meson.clock):
+								 Area.HomeButton.hoverStart={Meson.clock}}
+>>
+
+
+Image.YellowSpline<<
+	.parent=""
+	.file="img/yellow_spline.png"
+>>
+Spline.HomeButtonReveal.controlPoints= [ [98,513],[126,513],[142,537],[142,557],[143,578],[124,602],[98,601],[73,600],[55,582],[55,556],[55,530],[74,513],[98,513],]
+SplineImage.HomeButtonReveal<<
+	.t={Area.HomeButton.hoverT/3}
+	.parent="Display.Primary"
+	.layer=8000
+	.spline="Spline.HomeButtonReveal"
+	.splineRadius=[7]
+	.splineEnd={INTERP(^t=$$$.t,^i=0, ^o=1, ^a=0, ^b=1)}
+	.alpha={Image.HomeButton.alpha}
+>>
+SplineRenderer.HomeButtonReveal<<
+	.texture="Image.YellowSpline"
+	//.bilinear=true	
+>>
+Trigger.EngageHomeButton<<
+	.test={SplineImage.HomeButtonReveal.splineEnd==1}
+	.exec={AnimItem.current=""; ClickOnReset(); View.3d.desiredPhi=0}
+>>
+
+
+
+
+
+
 

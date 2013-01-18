@@ -1,74 +1,196 @@
+Meson.max{#a=0, #b=0}={
+	#a>#b?#a:#b
+}
+Meson.min{#a=0, #b=0}={
+	#a>#b?#b:#a
+}
+
+
 cursor1{#arg=[false, 0,0,0]}={	
-	LeftHand.x=(#arg)[1];
-	LeftHand.y=(#arg)[2];
-	LeftHand.z=(#arg)[3];	
+//	displayMsg("Rx: "~RightHand.x~"   Ry: "~RightHand.y~"   Rz: "~RightHand.z~"   Ractive: "~RightHand.isActive);
+
+
+	RightHand.temp[0]=((#arg)[0]==1);
+	RightHand.temp[1]=((#arg)[1]+0.3)*-1476.923+100;
+	RightHand.temp[2]=((#arg)[3]+0.3)*-1280-100;
+	RightHand.temp[3]=(((#arg)[2]+3.4)*-2)-1;	
+		
+
+	0;
 }
+
 cursor2{#arg=[false, 0,0,0]}={	
-	RightHand.x=(#arg)[1];
-	RightHand.y=(#arg)[2];
-	RightHand.z=(#arg)[3];	
+//	displayMsg2("Lx: "~LeftHand.x~"   Ly: "~LeftHand.y~"   Lz: "~LeftHand.z~"   Lactive: "~LeftHand.isActive~"   pan: "~LeftHand.pan~"  timera: "~Timer.LeftPan.active);
+	
+	LeftHand.temp[0]=((#arg)[0]==1);
+	LeftHand.temp[1]=((#arg)[1]+0.3)*-1476.923;
+	LeftHand.temp[2]=((#arg)[3]+0.3)*-1280-100;
+	LeftHand.temp[3]=(((#arg)[2]+3.4)*-2)-1;
+	
+
+			
+	0;
 }
 
+Ticker.UpdateHands<<
+	.exec={
+		
+			RightHand.read=RightHand.temp[0];
+			RightHand.x=RightHand.temp[1];
+			RightHand.y=RightHand.temp[2];
+			RightHand.z=RightHand.temp[3];
+		
+			LeftHand.read=LeftHand.temp[0];
+			LeftHand.x=LeftHand.temp[1];
+			LeftHand.y=LeftHand.temp[2];
+			LeftHand.z=LeftHand.temp[3];		
+		
+		
+			RightHand.past=[RightHand.past[1],RightHand.past[2],RightHand.past[3],RightHand.past[4],RightHand.past[5],
+				   RightHand.past[6],RightHand.past[7],RightHand.past[8],RightHand.past[9],RightHand.past[10],
+				   RightHand.past[11],RightHand.past[12],RightHand.past[13],RightHand.past[14],[RightHand.x,RightHand.y, (Meson.clock)]];
+	
+			LeftHand.past=[LeftHand.past[1],LeftHand.past[2],LeftHand.past[3],LeftHand.past[4],LeftHand.past[5],
+				   LeftHand.past[6],LeftHand.past[7],LeftHand.past[8],LeftHand.past[9],LeftHand.past[10],
+				   LeftHand.past[11],LeftHand.past[12],LeftHand.past[13],LeftHand.past[14],[LeftHand.x,LeftHand.y, (Meson.clock)]];
+				
+				(LeftHand.isActive& RightHand.isActive & Hands.close &Image.SplashPage.alpha==0 & allPlayingScripts==[])?(
+							View.3d.setDesiredFov(Pan.lastFov);
+							View.3d.desiredCx=(Pan.lastCx);
+							View.3d.desiredCy=(Pan.lastCy);
+							View.3d.desiredTheta=((LeftHand.z-RightHand.z)*270);
+							View.3d.desiredPhi=(LeftHand.y-540)/-6;																					  		
+															 
+							)		//the only difference in these tests is that one tests for hands.close and the other doesn't. so, for it to reach this...
+							:(LeftHand.isActive & Image.SplashPage.alpha==0 & allPlayingScripts==[] ?(
+															  				  View.3d.setDesiredFov((View.3d.maxFOV-View.3d.minFOV)*-1*LeftHand.z+View.3d.maxFOV);
+																			  View.3d.calcCx=((LeftHand.x/1920)<Pan.lastCx?Meson.min(^a=(((LeftHand.x/1920))-Pan.lastCx)*Pan.limiter+Pan.lastCx, ^b=Pan.lastCx):Meson.max(^a=(((LeftHand.x/1920))-Pan.lastCx)*Pan.limiter+Pan.lastCx, ^b=Pan.lastCx));
+																			  View.3d.calcCy=((LeftHand.y/1080)<Pan.lastCy?Meson.min(^a=(((LeftHand.y/1080))-Pan.lastCy)*Pan.limiter+Pan.lastCy, ^b=Pan.lastCy):Meson.max(^a=(((LeftHand.y/1080))-Pan.lastCy)*Pan.limiter+Pan.lastCy, ^b=Pan.lastCy));
+																			  View.3d.desiredCx=Meson.max(^a=0, ^b=Meson.min(^a=View.3d.calcCx, ^b=1));
+																			  View.3d.desiredCy=Meson.max(^a=0, ^b=Meson.min(^a=View.3d.calcCy, ^b=1));																			  
+																		     ) 															 			     
+											 				  );
+		
+	}	
+>>
 
+Trigger.SetFromAnim<<
+	.test={allPlayingScripts==[]}
+	.exec={Pan.lastFov=(View.3d.fov);
+		   Pan.lastCx=(View.3d.cx);
+		   Pan.lastCy=(View.3d.cy);}
+>>
+
+Pan<<
+	.limiter={Meson.max(^a=LeftHand.z, ^b=0)}							//the limiter doesn't do anything, as if it's always one? how does that make sense? 
+	.lastFov=28
+	.lastCx=0.5
+	.lastCy=0.5
+>>
+
+// HairTrigger.MouseHandTrigger<<
+// 	.test={Display.Primary.mouseX; Display.Primary.mouseY}
+// 	.exec={cursor1([true,Display.Primary.mouseX,Display.Primary.mouseY,0])}
+// >>
 
 gesture{#arg=[0, 1, 0, 0, 0, 0]}={
 	
 	//displayMsg("gesture");
 	
 	
-	Gesture.isActive=(#arg)[0];
-	Gesture.scale=(#arg)[1];
-	Gesture.rotate=(#arg)[2];
-	Gesture.pitch=(#arg)[3];
-	Gesture.translateX=(#arg)[4];
-	Gesture.translateY=(#arg)[5];
+	// Gesture.isActive=(#arg)[0];
+	// Gesture.scale=(#arg)[1];
+	// Gesture.rotate=(#arg)[2];
+	// Gesture.pitch=(#arg)[3];
+	// Gesture.translateX=(#arg)[4];
+	// Gesture.translateY=(#arg)[5];
+	
+	0;
 }
 
+Timer.RightPan<<
+	.active=false
+	.delay=0.5
+	.exec={RightHand.pan=true;}
+>>
 
+Timer.LeftPan<<
+	.active=false
+	.delay=0.5
+	.exec={LeftHand.pan=true; LeftHand.startPanCx=(View.3d.cx); LeftHand.startPanCy=(View.3d.cy);
+							  LeftHand.startPanHandx=(LeftHand.x); LeftHand.startPanHandy=(LeftHand.y);}
+>>
+
+Hands<<
+	//.closeX={RightHand.x-LeftHand.x<600}
+	.closeY={LeftHand.y-RightHand.y<250&
+		  	 LeftHand.y-RightHand.y>-250}
+	.close={$$$.closeY}// & $$$.closeX} //this must evaluate false, but when? oh, x? didn't we not liek the test for x?
+>>
 
 LeftHand<<
+	.temp=[false,0,0,0]
+	.isActive={$$$.y<980}
 	.x=0
 	.y=0
-	.z=0
-	.t=1
+	.z=-1
+	.t=1	
+	.startPanCx=0
+	.startPanCy=0
+	.startPanHandx=0
+	.startPanHandy=0
+	.read=false
+	.pan=false
+	.circled={$$$.past[14][2]-$$$.past[0][2]<30 & ($$$.past[14][0]-$$$.past[0][0]>200 | $$$.past[14][0]-$$$.past[0][0]<-200)}
+	.past=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],
+		   [0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],
+		   [0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],]	
 >>
-
 
 RightHand<<
+	.temp=[false,0,0,0]
+	.pan=true
+	.isActive={$$$.y<980}
 	.x=0
 	.y=0
-	.z=0
+	.z=-1
 	.t=1
+	.rad=false
+	.circled={$$$.past[14][2]-$$$.past[0][2]<30 & ($$$.past[14][0]-$$$.past[0][0]>200 | $$$.past[14][0]-$$$.past[0][0]<-200)}
+	.swiped={$$$.past[14][2]-$$$.past[0][2]<10 & ($$$.past[14][0]-$$$.past[0][0]<-400)}
+	.past=[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],
+		   [0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],
+		   [0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],]	
 >>
 
-Image.LeftHandCursor<<
-	.parent="Display.Primary"
-	.layer=99999
-	.buffer=red
-	.x={LeftHand.x}
-	.y={LeftHand.y}
-	.anchor=_C
-	.scaleX={$$$.t}
-	.width=50
-	.height=50
-	.alpha=0.5
-	.t={LeftHand.t}
->>
-
-
-Image.RightHandCursor<<
-	.parent="Display.Primary"
-	.layer=99999
-	.buffer=gray
-	.x={RightHand.x}
-	.y={RightHand.y}
-	.anchor=_C
-	.scaleX={$$$.t}
-	.width=50
-	.height=50
-	.alpha=0.5
-	.t={RightHand.t}
->>
+// Image.LeftHandCursor<<
+// 	.parent="Display.Primary"
+// 	.layer=99999
+// 	.buffer=red
+// 	.x={LeftHand.x}
+// 	.y={LeftHand.y}
+// 	.anchor=_C
+// 	.scaleX=1//{$$$.t}
+// 	.width=50
+// 	.height=50
+// 	.alpha=0.5
+// 	.t={LeftHand.t}
+// >>
+// 
+// 
+// Image.RightHandCursor<<
+// 	.parent="Display.Primary"
+// 	.layer=99999
+// 	.buffer=gray
+// 	.x={RightHand.x}
+// 	.y={RightHand.y}
+// 	.anchor=_C
+// 	.scaleX=1//{$$$.t}
+// 	.width=50
+// 	.height=50
+// 	.alpha=0.5
+// 	.t={RightHand.t}
+// >>
 
 
 
@@ -85,48 +207,49 @@ Gesture<<
 
 
 
-
-Area.Class<<
-
-	.leftHover={LeftHand.x>($$.image->absX+$$.x) & LeftHand.x<($$.image->absX+$$.x+$$.width*$$.image->scaleX) &
- 			    LeftHand.y>($$.image->absY+$$.y) & LeftHand.y<($$.image->absY+$$.y+$$.height*$$.image->scaleY)}
-	.leftPress={$$.press=true}
-	
-	.leftT=0
-	
-	
-	.rightHover={RightHand.x>($$.image->absX+$$.x) & RightHand.x<($$.image->absX+$$.x+$$.width*$$.image->scaleX) &
- 			    RightHand.y>($$.image->absY+$$.y) & RightHand.y<($$.image->absY+$$.y+$$.height*$$.image->scaleY)}
-	.rightPress={$$.press=true}
-	
-	.rightT=0
-	
-	
-	// .new= Area.Class.new + {		
-	// 	
-	// 	ChangeTrigger.$_LeftHover.test={$$.leftHover};
-	// 	ChangeTrigger.$_LeftHover.exec={$$.leftHover?(Anim.$_LeftTimer.goal=0; LeftHand.t={$$.leftT}; $$.hover=true):(Anim.$_LeftTimer.goal=3; $$.press=false; $$.hover=false)};
-	// 
-	// 	Anim.$_LeftTimer.goal=1.5;
-	// 	Anim.$_LeftTimer.rate={$$.leftHover?2:999999};
-	// 	Anim.$_LeftTimer.attr=["$$.leftT"];
-	// 	
-	// 	Trigger.$_LeftPress.test={$$.leftT==0};
-	// 	Trigger.$_LeftPress.exec={$$.leftHover?$$.leftPress()};
-	// 
-	// 	ChangeTrigger.$_RightHover.test={$$.rightHover};
-	// 	ChangeTrigger.$_RightHover.exec={$$.rightHover?(Anim.$_RightTimer.goal=0; RightHand.t={$$.rightT}; $$.hover=true):(Anim.$_RightTimer.goal=3; $$.press=false; $$.hover=false)};
-	// 
-	// 	Anim.$_RightTimer.goal=1.5;
-	// 	Anim.$_RightTimer.rate={$$.rightHover?2:999999};
-	// 	Anim.$_RightTimer.attr=["$$.rightT"];
-	// 	
-	// 	Trigger.$_RightPress.test={$$.rightT==0};
-	// 	Trigger.$_RightPress.exec={$$.rightHover?$$.rightPress()};
-	// 
-	// }	
->>
-
+// 
+// Area.Class<<
+// 
+// 	.leftHover={LeftHand.x>($$.image->absX+$$.x) & LeftHand.x<($$.image->absX+$$.x+$$.width*$$.image->scaleX) &
+//  			    LeftHand.y>($$.image->absY+$$.y) & LeftHand.y<($$.image->absY+$$.y+$$.height*$$.image->scaleY)}
+// 	.leftPress={$$.press=true}
+// 	
+// 	.leftT=0
+// 	
+// 	
+// 	.rightHover={RightHand.x>($$.image->absX+$$.x) & RightHand.x<($$.image->absX+$$.x+$$.width*$$.image->scaleX) &
+//  			    RightHand.y>($$.image->absY+$$.y) & RightHand.y<($$.image->absY+$$.y+$$.height*$$.image->scaleY)}
+// 	.rightPress={$$.press=true}
+// 	
+// 	.rightT=0
+// 	
+// 	.picker=""
+// 	
+// 	.new= Area.Class.new + {		
+// 		
+// 		ChangeTrigger.$_LeftHover.test={$$.leftHover};
+// 		ChangeTrigger.$_LeftHover.exec={$$.leftHover?(Anim.$_LeftTimer.goal=0; LeftHand.t={$$.leftT}; $$.hover=true; $$.picker="LeftHand"; ):(Anim.$_LeftTimer.goal=3; $$.press=false; $$.hover=false;)};
+// 	
+// 		Anim.$_LeftTimer.goal=1.5;
+// 		Anim.$_LeftTimer.rate={$$.leftHover?2:999999};
+// 		Anim.$_LeftTimer.attr=["$$.leftT"];
+// 		
+// 		Trigger.$_LeftPress.test={$$.leftT==0};
+// 		Trigger.$_LeftPress.exec={$$.leftHover?$$.leftPress()};
+// 	
+// 		ChangeTrigger.$_RightHover.test={$$.rightHover};
+// 		ChangeTrigger.$_RightHover.exec={$$.rightHover?(Anim.$_RightTimer.goal=0; RightHand.t={$$.rightT}; $$.hover=true; $$.picker="RightHand"):(Anim.$_RightTimer.goal=3; $$.press=false; $$.hover=false;)};
+// 	
+// 		Anim.$_RightTimer.goal=1.5;
+// 		Anim.$_RightTimer.rate={$$.rightHover?2:999999};
+// 		Anim.$_RightTimer.attr=["$$.rightT"];
+// 		
+// 		Trigger.$_RightPress.test={$$.rightT==0};
+// 		Trigger.$_RightPress.exec={$$.rightHover?$$.rightPress()};
+// 	
+// 	}	
+// >>
+// 
 
 
 
@@ -134,14 +257,14 @@ Area.Class<<
 Image.IPAddress<<
 	.parent="Display.Primary"
 	.text={Meson.getProperty("meson.ipaddr")}
-	.layer=99999999999
+	.layer=-1//99999999999
 >>
 
 Image.Message<<
 	.parent="Display.Primary"
 	.anchor=_NE
 	.x={$$$.parent->width-100}
-	.layer=99999999999
+	.layer=-1//99999999999
 >>
 
 Image.Message2<<
@@ -150,11 +273,35 @@ Image.Message2<<
 	.x={$$$.parent->width-100}
 	.layer=99999999999
 	.y=200
+	.text={Pan.limiter~"\n"~View.3d.calcCx~"\n"~View.3d.calcCy~"\n"~View.3d.desiredCx~"\n"~View.3d.desiredCy}
+>>
+
+Image.Message3<<
+	.parent="Display.Primary"
+	.anchor=_NE
+	.x={$$$.parent->width-100}
+	.layer=-1//99999999999
+	.y=400
+>>
+
+Image.Message4<<
+	.parent="Display.Primary"
+	.anchor=_NE
+	.x={$$$.parent->width-100}
+	.layer=-1//99999999999
+	.y=600
 >>
 
 displayMsg={
 	Image.Message2.text=(#arg);	
 }
+displayMsg2={
+	Image.Message3.text=(#arg);	
+}
+displayMsg3={
+	Image.Message4.text=(#arg);	
+}
+
 
 
 
@@ -197,19 +344,22 @@ setFov={
 //_________________________________________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________________________________________
 
+
+View.3d.pastFov=0
+
 HairTrigger.GestureHair<<
 	.test={Gesture.scale; Gesture.rotate; Gesture.translateX; Gesture.translateY}
 	.exec={
 			displayMsg("scale: "~Gesture.scale~"\nrotate:"~Gesture.rotate~"\ntranslateX:"~Gesture.translateX~"\ntranslateY:"~Gesture.translateY);
 		
-		
-
-			View.3d.desiredTheta=(Gesture.rotate/100*-180);
-			setFov();
+			((View.3d.fov<15)?
+				("";
+				//View.3d.desiredCx=Meson.min(^a=Meson.max(^a=(Gesture.translateX/400)+0.5, ^b=-0.5), ^b=1.5);
+				//View.3d.desiredCy=Meson.min(^a=Meson.max(^a=(Gesture.translateY/400)+0.5+0.5, ^b=-0.5), ^b=1.5);
+				):View.3d.desiredTheta=(Gesture.rotate/100*-180));
+			//setFov();
 			//setFov((Gesture.scale-0.75)*-80 + 48);
-			//View.3d.fov=(Gesture.scale-0.75)*-80 + 48;
-			View.3d.desiredCx=(Gesture.translateX/400)+0.5;
-			View.3d.desiredCy=(Gesture.translateY/400)+0.5+0.5;
+			View.3d.setDesiredFov((Gesture.scale-0.75)*-80 + 48);
 
 
 
@@ -230,7 +380,11 @@ HairTrigger.GestureHair<<
 >>
 
 
-
+Trigger.ZoomOutCenter<<
+	.test={View.3d.fov>15}
+	.exec={View.3d.desiredCx=0.5;
+		   View.3d.desiredCy=0.5;}
+>>
 
 
 

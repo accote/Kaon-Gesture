@@ -56,7 +56,11 @@ floorReflection==""?(floorReflection=[0,1])
 floorTexture==""?(floorTexture=false)
 floorTextureIntesity==""?(floorTextureIntesity=0.2)
 selfShadows==""?(selfShadows=false)
-backgroundGlow==""?(backgroundGlow=[])
+//backgroundGlow==""?(backgroundGlow=[])
+
+
+backgroundGlow=[1,1,1,1,0.5,0.5,0.865,0.4];
+
 startWith3D==""?(startWith3D=true)
 colorTheme==""?(colorTheme="99a")
 
@@ -98,60 +102,60 @@ Trigger.AutoRunInSS.exec={autoRunMode=true}
 /*					Screen Saver							  */
 /*____________________________________________________________*/
 
-
-
-
-Timer.StartScreenSaver<<
-  .delay=3*60*60
-  .exec={screenSaverActive=true}
-  .start()
->>
-Trigger.AnyTouchSS.test={theDisplay->press}
-Trigger.AnyTouchSS.exec={screenSaverActive=false;Timer.StartScreenSaver.start()}
-
-randomViolatorPos=0
-Image.Violator<<
-  .width={theDisplay->width}
-  .height=200
-  .buffer="EFFF"
-  .layer={screenSaverActive?999999:-1}
-  .y={randomViolatorPos*(theDisplay->height-Image.Violator.height)}
->>
-
-Style.CallToAction<<
-  .color="888"
-  .fontWeight=_BOLD
-  .fontSize=24
-  .textAlign=_CENTER
->>
-
-ctaAnim=0
-Image.CallToAction<<
-  .parent="Image.Violator"
-  .dataSource={customScreenSaverLogo==""?Image.Tools.dataSource:theDisplay->dataSource}
-  .file={customScreenSaverLogo==""?"img/logoColor.gif@img/logoMask.gif":customScreenSaverLogo}
-  .anchor=_N
-  .flyX={ctaAnim>0.25?0:1000-1000*4*ctaAnim}
-  .x={Image.Violator.width/2+Image.CallToAction.flyX}
-  .y=50
->>
-Image.CallToActionSub<<
-  .parent="Image.Violator"
-  .text={"%CallToAction{TOUCH THE SCREEN TO START}"}
-  .anchor=_N
-  .x={Image.Violator.width/2-Image.CallToAction.flyX}
-  .y={70+Image.CallToAction.height}
->>
-Anim.CTAAnim<<
-  .attr=["ctaAnim"]
-  .goal=[10]
-  .enabled={screenSaverActive}
-  .rate=1
->>
-Trigger.CTAReset<<
-  .test={ctaAnim==Anim.CTAAnim.goal[0]}
-  .exec={ctaAnim=0;randomViolatorPos=random01()}
->>
+// 
+// 
+// 
+// Timer.StartScreenSaver<<
+//   .delay=3*60*60
+//   .exec={screenSaverActive=true}
+//   .start()
+// >>
+// Trigger.AnyTouchSS.test={theDisplay->press}
+// Trigger.AnyTouchSS.exec={screenSaverActive=false;Timer.StartScreenSaver.start()}
+// 
+// randomViolatorPos=0
+// Image.Violator<<
+//   .width={theDisplay->width}
+//   .height=200
+//   .buffer="EFFF"
+//   .layer={screenSaverActive?999999:-1}
+//   .y={randomViolatorPos*(theDisplay->height-Image.Violator.height)}
+// >>
+// 
+// Style.CallToAction<<
+//   .color="888"
+//   .fontWeight=_BOLD
+//   .fontSize=24
+//   .textAlign=_CENTER
+// >>
+// 
+// ctaAnim=0
+// Image.CallToAction<<
+//   .parent="Image.Violator"
+//   .dataSource={customScreenSaverLogo==""?Image.Tools.dataSource:theDisplay->dataSource}
+//   .file={customScreenSaverLogo==""?"img/logoColor.gif@img/logoMask.gif":customScreenSaverLogo}
+//   .anchor=_N
+//   .flyX={ctaAnim>0.25?0:1000-1000*4*ctaAnim}
+//   .x={Image.Violator.width/2+Image.CallToAction.flyX}
+//   .y=50
+// >>
+// Image.CallToActionSub<<
+//   .parent="Image.Violator"
+//   .text={"%CallToAction{TOUCH THE SCREEN TO START}"}
+//   .anchor=_N
+//   .x={Image.Violator.width/2-Image.CallToAction.flyX}
+//   .y={70+Image.CallToAction.height}
+// >>
+// Anim.CTAAnim<<
+//   .attr=["ctaAnim"]
+//   .goal=[10]
+//   .enabled={screenSaverActive}
+//   .rate=1
+// >>
+// Trigger.CTAReset<<
+//   .test={ctaAnim==Anim.CTAAnim.goal[0]}
+//   .exec={ctaAnim=0;randomViolatorPos=random01()}
+// >>
 
 Meson.notebookPages=128
 
@@ -302,7 +306,9 @@ Area.3DModel<<
   .width={Scene.3d.width}
   .height={insetBottom-100}
   .cursor=HAND
-  .boxPick=true
+  //.boxPick=true
+  .rightPress=""
+  .leftPress=""
 >>
 
 Trigger.Start3D.test={Area.3DModel.press}
@@ -1024,6 +1030,8 @@ ActionLabel.Class<<
     ActionLabelText.$_text.inst="$";
     ActionLabelImage.$_image.parent="ActionLabel.$";
     ActionLabelImage.$_image.inst="$";
+
+
   }
 >>
 
@@ -1050,6 +1058,8 @@ ActionTrigger.Class<<
     Trigger.$.exec={allPlayingScripts==[]?foreach(^elem="i";^in=$$.subMembers;^do={#i->script!=""?((#i->actionType=="still"?(Scene.3d.playStartSlow(#i->script)?Scene.3d.jumpToTime(^script=#i->script;^time=#i->jumpToTime)):Scene.3d.playStartSlow(#i->script))?TrackUserAction(#i->trackingURL))});recordAction($$.trackingAddress);$$.onClick()};
     Ticker.$_urun.exec={ActionTrigger.$.updateRunnable()};
     Ticker.$_urun.order=20;
+
+
   }
 >>
 
@@ -1367,6 +1377,10 @@ ScriptButton.Class<<
     Anim.$_bloop.enabled={fullMode|ipadMode};
     Trigger.$_reset.test={!fullMode&!ipadMode};
     Trigger.$_reset.exec={$$.bloop=-2-0.15*$$.place};
+
+	
+	AnimItem.$_AnimItem.label=l10n("$")->text;
+	AnimItem.$_AnimItem.exec={$$.runDemo()};
   }
 >>
 
@@ -1682,7 +1696,7 @@ setZoomIndex={#a=(#arg-1)/4;View.3d.setDesiredFov(#a*View.3d.minFOV + (1-#a)*Vie
 // >>
 // 
 // ResetSerial=0
-// ClickOnReset={foreach(^elem="i";^in=allPlayingScripts;^do={#i->stop});Scene.3d.playInstantly(Scene.3d.runtime->getInitID());currentTip="";autoRunMode=false;ResetSerial=ResetSerial+1;}
+ClickOnReset={foreach(^elem="i";^in=allPlayingScripts;^do={#i->stop});Scene.3d.playInstantly(Scene.3d.runtime->getInitID());currentTip="";autoRunMode=false;ResetSerial=ResetSerial+1;}
 // ClickOnMeasure={Scene.3d.mode=_MEASURE}
 // ClickOnMove={Scene.3d.mode=_MOVE}
 // ClickOnTurn={Scene.3d.mode=_ROTATE}
@@ -1864,45 +1878,47 @@ AppControlSidecar.Class<<
   .pleaseShow={$$.isInit}
   .scriptRT={@("Scene.3d.script_"~$$.script)}
   .alpha=0
+
   .layer=97
+
   .wrapWidth=450
   .enabled=true // not sure why this was not enabled, but enabling it is required for links to work
   .new={
-    ActionLabelText.$_text.tabStops={[50*fontScale,80*fontScale,110*fontScale]};
-    ActionLabelText.$_text.wrapWidth={$$.wrapWidth*fontScale};
-    ActionLabelText.$_text.noOrphan=true;
-    ActionLabelText.$_text.enabled=true; // to allow links to work
-    Anim.$_inout.attr="$$.alpha";
-    Anim.$_inout.rate=1;
-    Anim.$_inout.goal={$$.pleaseShow&!screenSaverActive&(autoRunMode|sidecarsDuring|allPlayingScripts==[])?1:-1};
-    ImageBorder.$.color="ccc";
-    Image.$_close.parent="$$";
-    Image.$_close.anchor=_SE;
-    Image.$_close.x={$$.width+9};
-    Image.$_close.y=-13;
-    Image.$_close.layer=11;
-    Image.$_close.dataSource=Image.Tools.dataSource;
-    Image.$_close.file="img/sidecarClose.png";
-    Image.$_close.cursor=HAND;
-    Image.$_close.absEnabled=true;
-    Image.$_frame.layer={$$.layer-1};
-    Image.$_frame.x={$$.absX-8};
-    Image.$_frame.y={$$.absY-8};
-    Image.$_frame.width={$$.width+16};
-    Image.$_frame.height={$$.height+16};
-    Image.$_frame.enabled=false;
-    Image.$_frame.buffer="efefef";
-    Image.$_frame.alpha={$$.alpha};
-    ImageBorder.$_frame.color="ccc";
-    Area.$_close.image="Image.$_close";
-    Area.$_close.boxPick=true;
-    Trigger.$_show.test={$$.scriptRT!=""&$$.scriptRT->playing};
-    Trigger.$_show.exec={$$.pleaseShow=true;$$.layer=98};
-    Trigger.$_hide.test={Area.$_close.press|!fullMode|(allPlayingScripts!=[]&(!$$.scriptRT->playing))};
-    Trigger.$_hide.exec={$$.pleaseShow=false;$$.layer=97;Area.$_close.press?($$.alpha=0)};
-    ChangeTrigger.$_on_reset.last=ResetSerial;
-    ChangeTrigger.$_on_reset.test={ResetSerial};
-    ChangeTrigger.$_on_reset.exec={!$$.isInit?(Trigger.$_hide.exec();$$.alpha=0)};
+    // ActionLabelText.$_text.tabStops={[50*fontScale,80*fontScale,110*fontScale]};
+    // ActionLabelText.$_text.wrapWidth={$$.wrapWidth*fontScale};
+    // ActionLabelText.$_text.noOrphan=true;
+    // ActionLabelText.$_text.enabled=true; // to allow links to work
+    // Anim.$_inout.attr="$$.alpha";
+    // Anim.$_inout.rate=1;
+    // Anim.$_inout.goal={$$.pleaseShow&!screenSaverActive&(autoRunMode|sidecarsDuring|allPlayingScripts==[])?1:-1};
+    // ImageBorder.$.color="ccc";
+    // Image.$_close.parent="$$";
+    // Image.$_close.anchor=_SE;
+    // Image.$_close.x={$$.width+9};
+    // Image.$_close.y=-13;
+    // Image.$_close.layer=11;
+    // Image.$_close.dataSource=Image.Tools.dataSource;
+    // Image.$_close.file="img/sidecarClose.png";
+    // Image.$_close.cursor=HAND;
+    // Image.$_close.absEnabled=true;
+    // Image.$_frame.layer={$$.layer-1};
+    // Image.$_frame.x={$$.absX-8};
+    // Image.$_frame.y={$$.absY-8};
+    // Image.$_frame.width={$$.width+16};
+    // Image.$_frame.height={$$.height+16};
+    // Image.$_frame.enabled=false;
+    // Image.$_frame.buffer="efefef";
+    // Image.$_frame.alpha={$$.alpha};
+    // ImageBorder.$_frame.color="ccc";
+    // Area.$_close.image="Image.$_close";
+    // Area.$_close.boxPick=true;
+    // Trigger.$_show.test={$$.scriptRT!=""&$$.scriptRT->playing};
+    // Trigger.$_show.exec={$$.pleaseShow=true;$$.layer=98};
+    // Trigger.$_hide.test={Area.$_close.press|!fullMode|(allPlayingScripts!=[]&(!$$.scriptRT->playing))};
+    // Trigger.$_hide.exec={$$.pleaseShow=false;$$.layer=97;Area.$_close.press?($$.alpha=0)};
+    // ChangeTrigger.$_on_reset.last=ResetSerial;
+    // ChangeTrigger.$_on_reset.test={ResetSerial};
+    // ChangeTrigger.$_on_reset.exec={!$$.isInit?(Trigger.$_hide.exec();$$.alpha=0)};
   }
 >>
 AppControlHeading.extends=""
